@@ -1,86 +1,139 @@
-
-import java.util.HashMap;
-import java.util.function.Consumer;
-
 import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import javafx.scene.text.Font;
 
-public class GuiServer extends Application{
+import java.util.Map;
 
-	Server serverConnection;
-	
-	ListView<String> listItems;
-	ListView<String> listUsers;
+public class GuiServer extends Application {
 
-	HBox lists;
-	
-	
-	public static void main(String[] args) {
-		launch(args);
-	}
+    Server serverConnection;
+    ListView<String> listItems;
+    ListView<String> listUsers;
+    TableView<Map.Entry<String, String>> accountTable;
+    Scene mainScene;
+    Scene messageScene;
+    Scene accountScene;
+    Stage primaryStage;
 
+    public static void main(String[] args) {
+        launch(args);
+    }
 
-	@Override
-	public void start(Stage primaryStage) throws Exception {
-		serverConnection = new Server(data->{
-			Platform.runLater(()->{
-				switch (data.type){
-					case TEXT:
-						listItems.getItems().add(data.recipient+": "+data.message);
-						break;
-					case NEWUSER:
-						listUsers.getItems().add(String.valueOf(data.recipient));
-						listItems.getItems().add(data.recipient + " has joined!");
-						break;
-					case DISCONNECT:
-						listUsers.getItems().remove(String.valueOf(data.recipient));
-						listItems.getItems().add(data.recipient + " has disconnected!");
-				}
-			});
-		});
+    @Override
+    public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
+        primaryStage.setTitle("CS342_Project3_Server Monitor");
 
-		
-		listItems = new ListView<String>();
-		listUsers = new ListView<String>();
+        this.mainScene = createMainScene();
+        this.messageScene = createMessageScene();
+        this.accountScene = createAccountScene();
 
-		lists = new HBox(listUsers,listItems);
+        primaryStage.setScene(mainScene);
+        primaryStage.show();
 
+        primaryStage.setOnCloseRequest((WindowEvent t) -> System.exit(0));
 
-		BorderPane pane = new BorderPane();
-		pane.setPadding(new Insets(70));
-		pane.setStyle("-fx-background-color: coral");
-
-		pane.setCenter(lists);
-		pane.setStyle("-fx-font-family: 'serif'");
-		;
-
-		
-		primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-            @Override
-            public void handle(WindowEvent t) {
-                Platform.exit();
-                System.exit(0);
+        serverConnection = new Server(data -> {
+            if (listItems == null || listUsers == null) return;
+            switch (data.type) {
+                case TEXT:
+                    listItems.getItems().add(data.recipient + ": " + data.message);
+                    break;
+                case NEWUSER:
+                    listUsers.getItems().add(String.valueOf(data.recipient));
+                    listItems.getItems().add(data.recipient + " has joined!");
+                    refreshAccountTable();
+                    break;
+                case DISCONNECT:
+                    listUsers.getItems().remove(String.valueOf(data.recipient));
+                    listItems.getItems().add(data.recipient + " has disconnected!");
+                    break;
             }
         });
+    }
 
-		primaryStage.setScene(new Scene(pane, 500, 400));
-		primaryStage.setTitle("This is the Server");
-		primaryStage.show();
-		
-	}
+    private Scene createMainScene() {
+        Label label1 = new Label("Server: Connect4");
+        label1.setFont(Font.font("Serif", 20));
+        Button accountButton = new Button("Account");
+        Button messageButton = new Button("View Messages");
+        messageButton.setOnAction(e -> primaryStage.setScene(messageScene));
 
+        accountButton.setOnAction(e -> {
+            refreshAccountTable();
+            primaryStage.setScene(accountScene);
+        });
 
+        VBox buttonBox = new VBox(20, label1, accountButton, messageButton);
+        buttonBox.setPadding(new Insets(100, 0, 0, 150));
 
+        BorderPane mainPane = new BorderPane();
+        mainPane.setStyle("-fx-background-color: lightgray; -fx-font-family: 'serif';");
+        mainPane.setCenter(buttonBox);
+
+        return new Scene(mainPane, 500, 400);
+    }
+
+    private Scene createMessageScene() {
+        Label label = new Label("Message Scene");
+        label.setFont(Font.font("Times New Roman", 18));
+
+        listItems = new ListView<>();
+        listUsers = new ListView<>();
+        HBox lists = new HBox(10, listUsers, listItems);
+        lists.setPadding(new Insets(10));
+
+        Button backBtn = new Button("Back to Main");
+        backBtn.setOnAction(e -> primaryStage.setScene(mainScene));
+
+        VBox messageLayout = new VBox(15, label, lists, backBtn);
+        messageLayout.setAlignment(Pos.CENTER);
+        messageLayout.setPadding(new Insets(20));
+
+        BorderPane messagePane = new BorderPane();
+        messagePane.setStyle("-fx-background-color: coral; -fx-font-family: 'serif';");
+        messagePane.setCenter(messageLayout);
+
+        return new Scene(messagePane, 600, 400);
+    }
+
+    private Scene createAccountScene() {
+        Label label = new Label("Registered Accounts");
+        label.setFont(Font.font("Serif", 18));
+
+        accountTable = new TableView<>();
+        TableColumn<Map.Entry<String, String>, String> usernameCol = new TableColumn<>("Username");
+        usernameCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getKey()));
+        TableColumn<Map.Entry<String, String>, String> passwordCol = new TableColumn<>("Password");
+        passwordCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getValue()));
+
+        accountTable.getColumns().add(usernameCol);
+        accountTable.getColumns().add(passwordCol);
+
+        Button backBtn = new Button("Back to Main");
+        backBtn.setOnAction(e -> primaryStage.setScene(mainScene));
+
+        VBox layout = new VBox(15, label, accountTable, backBtn);
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(20));
+
+        BorderPane pane = new BorderPane();
+        pane.setStyle("-fx-background-color: lightblue; -fx-font-family: 'serif';");
+        pane.setCenter(layout);
+
+        return new Scene(pane, 600, 400);
+    }
+
+    private void refreshAccountTable() {
+        if (accountTable != null) {
+            accountTable.getItems().clear();
+            accountTable.getItems().addAll(LoginHandler.getAllUsers().entrySet());
+        }
+    }
 }
