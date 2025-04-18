@@ -102,33 +102,65 @@ public class GuiServer extends Application {
 
         return new Scene(messagePane, 600, 400);
     }
-
     private Scene createAccountScene() {
         Label label = new Label("Registered Accounts");
         label.setFont(Font.font("Serif", 18));
-
+    
         accountTable = new TableView<>();
         TableColumn<Map.Entry<String, String>, String> usernameCol = new TableColumn<>("Username");
         usernameCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getKey()));
         TableColumn<Map.Entry<String, String>, String> passwordCol = new TableColumn<>("Password");
         passwordCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getValue()));
-
+    
         accountTable.getColumns().add(usernameCol);
         accountTable.getColumns().add(passwordCol);
-
+    
         Button backBtn = new Button("Back to Main");
         backBtn.setOnAction(e -> primaryStage.setScene(mainScene));
-
-        VBox layout = new VBox(15, label, accountTable, backBtn);
+    
+        // ✅ 추가된 Refresh 버튼
+        Button refreshBtn = new Button("Refresh");
+        refreshBtn.setOnAction(e -> refreshAccountTable());
+    
+        HBox buttonBox = new HBox(10, backBtn, refreshBtn);
+        buttonBox.setAlignment(Pos.CENTER);
+    
+        VBox layout = new VBox(15, label, accountTable, buttonBox);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(20));
-
+    
         BorderPane pane = new BorderPane();
         pane.setStyle("-fx-background-color: lightblue; -fx-font-family: 'serif';");
         pane.setCenter(layout);
-
+    
         return new Scene(pane, 600, 400);
     }
+    // private Scene createAccountScene() {
+    //     Label label = new Label("Registered Accounts");
+    //     label.setFont(Font.font("Serif", 18));
+
+    //     accountTable = new TableView<>();
+    //     TableColumn<Map.Entry<String, String>, String> usernameCol = new TableColumn<>("Username");
+    //     usernameCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getKey()));
+    //     TableColumn<Map.Entry<String, String>, String> passwordCol = new TableColumn<>("Password");
+    //     passwordCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getValue()));
+
+    //     accountTable.getColumns().add(usernameCol);
+    //     accountTable.getColumns().add(passwordCol);
+
+    //     Button backBtn = new Button("Back to Main");
+    //     backBtn.setOnAction(e -> primaryStage.setScene(mainScene));
+
+    //     VBox layout = new VBox(15, label, accountTable, backBtn);
+    //     layout.setAlignment(Pos.CENTER);
+    //     layout.setPadding(new Insets(20));
+
+    //     BorderPane pane = new BorderPane();
+    //     pane.setStyle("-fx-background-color: lightblue; -fx-font-family: 'serif';");
+    //     pane.setCenter(layout);
+
+    //     return new Scene(pane, 600, 400);
+    // }
 
     private void refreshAccountTable() {
         if (accountTable != null) {
