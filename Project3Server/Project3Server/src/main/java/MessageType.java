@@ -1,3 +1,3 @@
-public enum MessageType{
+public enum MessageType {
     TEXT, NEWUSER, DISCONNECT;
 }

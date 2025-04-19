@@ -1,6 +1,7 @@
 import java.util.HashMap;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -76,19 +77,28 @@ public class GuiClient extends Application {
             signupButton.setDisable(!agreeCheck.isSelected());
         });
 
+        // loginButton.setOnAction(e -> {
+        //     isSignUp = false;
+        //     setupConnection();
+        //     primaryStage.setScene(chatScene);
+        //     primaryStage.setTitle("Client Chat");
+        // });
         loginButton.setOnAction(e -> {
             isSignUp = false;
-            setupConnection();
-            primaryStage.setScene(chatScene);
-            primaryStage.setTitle("Client Chat");
+            setupConnection(); // ✅ 씬 전환은 여기서 하지 않음!
         });
-
+        
         signupButton.setOnAction(e -> {
             isSignUp = true;
-            setupConnection();
-            primaryStage.setScene(chatScene);
-            primaryStage.setTitle("Client Chat");
+            setupConnection(); // ✅ 씬 전환 제거!
         });
+        
+        //signupButton.setOnAction(e -> {
+        //     isSignUp = true;
+        //     setupConnection();
+        //     primaryStage.setScene(chatScene);
+        //     primaryStage.setTitle("Client Chat");
+        // });
 
         loginBox.getChildren().addAll(title, usernameField, passwordField, agreeCheck, loginButton, signupButton);
         return new Scene(loginBox, 400, 300);
@@ -118,27 +128,77 @@ public class GuiClient extends Application {
         return new Scene(clientBox, 400, 300);
     }
 
+    private void showErrorMessage(String message) {
+        Label errorLabel = new Label(message);
+        errorLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+        Platform.runLater(() -> {
+            VBox loginBox = (VBox) loginScene.getRoot();
+            if (!loginBox.getChildren().contains(errorLabel)) {
+                loginBox.getChildren().add(errorLabel); // 로그인 창 제일 아래에 띄움
+            }
+        });
+    }
+    
+
     private void setupConnection() {
         clientConnection = new Client(data -> {
             switch (data.type) {
-                case NEWUSER:
-                    listUsers.getItems().add(data.recipient);
-                    listItems.getItems().add(data.recipient + " has joined!");
-                    break;
-                case DISCONNECT:
-                    listUsers.getItems().remove(data.recipient);
-                    listItems.getItems().add(data.recipient + " has disconnected!");
-                    break;
                 case TEXT:
-                    listItems.getItems().add(data.recipient + ": " + data.message);
+                    Platform.runLater(() -> {
+                        if (data.message.equals("LOGIN_SUCCESS") || data.message.equals("SIGNUP_SUCCESS")) {
+                            primaryStage.setScene(chatScene);
+                            primaryStage.setTitle("Client Chat");
+                        } else if (data.message.equals("LOGIN_FAIL") || data.message.equals("SIGNUP_FAIL")) {
+                            // ✅ 실패 시 메시지 표시
+                            showErrorMessage("Login Failed");
+    
+                            // ✅ 서버 연결 끊기
+                            try {
+                                clientConnection.close();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            listItems.getItems().add(data.recipient + ": " + data.message);
+                        }
+                    });
+                    break;
+    
+                case NEWUSER:
+                    Platform.runLater(() -> {
+                        listUsers.getItems().add(data.recipient);
+                        listItems.getItems().add(data.recipient + " has joined!");
+                    });
+                    break;
+    
+                case DISCONNECT:
+                    Platform.runLater(() -> {
+                        listUsers.getItems().remove((Integer) data.recipient);
+                        listItems.getItems().add(data.recipient + " has disconnected!");
+                    });
                     break;
             }
         });
+    
         clientConnection.start();
-
-        String username = usernameField.getText();
-        String password = passwordField.getText();
-        String payload = (isSignUp ? "SIGNUP" : "LOGIN") + ":" + username + ":" + password;
-        clientConnection.send(new Message(-1, payload));
+    
+        new Thread(() -> {
+            try {
+                while (clientConnection.out == null) {
+                    Thread.sleep(50);
+                }
+    
+                String username = usernameField.getText();
+                String password = passwordField.getText();
+                String payload = (isSignUp ? "SIGNUP" : "LOGIN") + ":" + username + ":" + password;
+    
+                clientConnection.send(new Message(-1, payload));
+    
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
+    
+    
 }

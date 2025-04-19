@@ -1,6 +1,5 @@
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -25,13 +24,12 @@ public class Server {
                 System.out.println("Server is waiting for a client!");
                 while (true) {
                     ClientThread c = new ClientThread(mysocket.accept(), count);
-                    callback.accept(new Message(count, true));
                     clients.add(c);
                     c.start();
                     count++;
                 }
             } catch (Exception e) {
-                callback.accept(new Message("Server did not launch"));
+                callback.accept(new Message(-1, "Server did not launch"));
             }
         }
     }
@@ -81,15 +79,16 @@ public class Server {
                 connection.setTcpNoDelay(true);
             } catch (Exception e) {
                 System.out.println("Streams not open");
+                return;
             }
 
-            updateClients(new Message(count, true));
+            System.out.println("Connected client #" + count);
 
             while (true) {
                 try {
                     Message data = (Message) in.readObject();
+                    System.out.println("Received message: " + data.message);
 
-                    // LOGIN or SIGNUP handling
                     if (data.message.startsWith("SIGNUP:") || data.message.startsWith("LOGIN:")) {
                         String[] parts = data.message.split(":");
                         if (parts.length == 3) {
@@ -99,19 +98,21 @@ public class Server {
 
                             String result;
                             if (type.equals("SIGNUP")) {
-                                result = LoginHandler.signup(username, password);
+                                result = LoginHandler.signup(username, password);  // String을 그대로 받기
                             } else {
-                                result = LoginHandler.login(username, password);
+                                result = LoginHandler.login(username, password);   // 역시 String
                             }
+                            
 
                             Message response = new Message(count, result);
                             out.writeObject(response);
 
-                            if (result.equals("OK") && type.equals("SIGNUP")) {
-                                Message newUser = new Message(count, true);
+                            if (result.equals("SIGNUP_SUCCESS") || result.equals("LOGIN_SUCCESS")) {
+                                Message newUser = new Message(count, true); // NEWUSER
                                 callback.accept(newUser);
                                 updateClients(newUser);
                             }
+
                             continue;
                         }
                     }
@@ -121,7 +122,9 @@ public class Server {
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    Message discon = new Message(count, false);
+                    System.out.println("Client #" + count + " disconnected due to error.");
+
+                    Message discon = new Message(count, false);  // DISCONNECT
                     callback.accept(discon);
                     updateClients(discon);
                     clients.remove(this);
@@ -130,4 +133,4 @@ public class Server {
             }
         }
     }
-}    
+}

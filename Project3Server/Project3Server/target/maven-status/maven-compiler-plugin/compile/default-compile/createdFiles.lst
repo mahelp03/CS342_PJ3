@@ -3,7 +3,6 @@ MessageType.class
 Server$ClientThread.class
 Server$1.class
 Server.class
-ClientThread$1.class
 ClientThread.class
 LoginHandler.class
 Message.class

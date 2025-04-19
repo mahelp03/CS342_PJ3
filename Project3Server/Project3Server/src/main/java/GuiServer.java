@@ -106,26 +106,45 @@ public class GuiServer extends Application {
         Label label = new Label("Registered Accounts");
         label.setFont(Font.font("Serif", 18));
     
-        accountTable = new TableView<>();
-        TableColumn<Map.Entry<String, String>, String> usernameCol = new TableColumn<>("Username");
-        usernameCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getKey()));
-        TableColumn<Map.Entry<String, String>, String> passwordCol = new TableColumn<>("Password");
-        passwordCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getValue()));
+        // ✅ 두 개의 ListView: 하나는 유저명, 하나는 비밀번호
+        ListView<String> usernameList = new ListView<>();
+        ListView<String> passwordList = new ListView<>();
     
-        accountTable.getColumns().add(usernameCol);
-        accountTable.getColumns().add(passwordCol);
+        // 🔁 갱신 함수
+        Runnable refreshAccounts = () -> {
+            usernameList.getItems().clear();
+            passwordList.getItems().clear();
+            for (Map.Entry<String, String> entry : LoginHandler.getAllUsers().entrySet()) {
+                usernameList.getItems().add(entry.getKey());
+                passwordList.getItems().add(entry.getValue());
+            }
+        };
     
+        // 초기 로딩
+        refreshAccounts.run();
+    
+        // 🔘 레이아웃 구성
+        Label usernameLabel = new Label("Username");
+        Label passwordLabel = new Label("Password");
+    
+        VBox usernameBox = new VBox(5, usernameLabel, usernameList);
+        VBox passwordBox = new VBox(5, passwordLabel, passwordList);
+    
+        HBox listsBox = new HBox(20, usernameBox, passwordBox);
+        listsBox.setAlignment(Pos.CENTER);
+        listsBox.setPadding(new Insets(10));
+    
+        // ⏪ 버튼
         Button backBtn = new Button("Back to Main");
         backBtn.setOnAction(e -> primaryStage.setScene(mainScene));
     
-        // ✅ 추가된 Refresh 버튼
         Button refreshBtn = new Button("Refresh");
-        refreshBtn.setOnAction(e -> refreshAccountTable());
+        refreshBtn.setOnAction(e -> refreshAccounts.run());
     
         HBox buttonBox = new HBox(10, backBtn, refreshBtn);
         buttonBox.setAlignment(Pos.CENTER);
     
-        VBox layout = new VBox(15, label, accountTable, buttonBox);
+        VBox layout = new VBox(15, label, listsBox, buttonBox);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(20));
     
@@ -135,6 +154,8 @@ public class GuiServer extends Application {
     
         return new Scene(pane, 600, 400);
     }
+    
+    
     // private Scene createAccountScene() {
     //     Label label = new Label("Registered Accounts");
     //     label.setFont(Font.font("Serif", 18));

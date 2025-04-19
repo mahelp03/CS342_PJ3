@@ -1,33 +1,32 @@
 import java.io.Serializable;
 
 public class Message implements Serializable {
-    static final long serialVersionUID = 42L;
-    MessageType type;
-    String message;
-    int recipient;
+    private static final long serialVersionUID = 42L; // ✅ 꼭 명시
 
-    public Message(int i, boolean connect){
-        if(connect) {
-            type = MessageType.NEWUSER;
-            message = "User "+i+" has joined!";
-            recipient = i;
+    public MessageType type;
+    public String message;
+    public int recipient;
+
+    public Message(int recipient, String message) {
+        this.type = MessageType.TEXT;
+        this.recipient = recipient;
+        this.message = message;
+    }
+
+    public Message(int recipient, boolean connect) {
+        this.recipient = recipient;
+        if (connect) {
+            this.type = MessageType.NEWUSER;
+            this.message = "User " + recipient + " has joined!";
         } else {
-            type = MessageType.DISCONNECT;
-            message = "User "+i+" has disconnected!";
-            recipient = i;
+            this.type = MessageType.DISCONNECT;
+            this.message = "User " + recipient + " has disconnected!";
         }
     }
 
-    public Message(String mess){
-        type = MessageType.TEXT;
-        message = mess;
-        recipient = -1;
-    }
-
-    public Message(int rec, String mess){
-        type = MessageType.TEXT;
-        message = mess;
-        recipient = rec;
+    public Message(String message) {
+        this.type = MessageType.TEXT;
+        this.message = message;
+        this.recipient = -1;
     }
 }
-
