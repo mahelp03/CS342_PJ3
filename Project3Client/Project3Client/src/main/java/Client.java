@@ -63,6 +63,14 @@ public class Client extends Thread{
 		}
 	}
 	
-
+	public void sendRaw(Object data) {
+		try {
+			out.writeObject(data);
+			out.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 
 }

@@ -86,7 +86,18 @@ public class Server {
 
             while (true) {
                 try {
-                    Message data = (Message) in.readObject();
+                    // Message data = (Message) in.readObject();
+                    Object obj = in.readObject();
+                    Message data = null;
+
+                    if (obj instanceof Message) {
+                        data = (Message) obj;
+                        System.out.println("Received message: " + data.message);
+                        callback.accept(data);
+                        updateClients(data);
+                    }
+
+
                     System.out.println("Received message: " + data.message);
 
                     if (data.message.startsWith("SIGNUP:") || data.message.startsWith("LOGIN:")) {
