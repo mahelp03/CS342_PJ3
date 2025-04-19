@@ -103,30 +103,30 @@ public class Server {
                     if (data.message.startsWith("SIGNUP:") || data.message.startsWith("LOGIN:")) {
                         String[] parts = data.message.split(":");
                         if (parts.length == 3) {
-                            String type = parts[0];
+                            String type = parts[0]; // To Server chatting
                             String username = parts[1];
                             String password = parts[2];
-
-                            String result;
-                            if (type.equals("SIGNUP")) {
-                                result = LoginHandler.signup(username, password);  // String을 그대로 받기
-                            } else {
-                                result = LoginHandler.login(username, password);   // 역시 String
-                            }
-                            
-
-                            Message response = new Message(count, result);
+                    
+                            String result = type.equals("SIGNUP")
+                                    ? LoginHandler.signup(username, password)
+                                    : LoginHandler.login(username, password);
+                    
+                            Message response = new Message(count, result.equals("OK") 
+                                ? (type + "_SUCCESS") 
+                                : (type + "_FAIL"));
+                    
                             out.writeObject(response);
-
-                            if (result.equals("SIGNUP_SUCCESS") || result.equals("LOGIN_SUCCESS")) {
-                                Message newUser = new Message(count, true); // NEWUSER
+                    
+                            if (result.equals("OK")) {
+                                Message newUser = new Message(count, true);
                                 callback.accept(newUser);
                                 updateClients(newUser);
                             }
-
+                    
                             continue;
                         }
                     }
+                    
 
                     callback.accept(data);
                     updateClients(data);
