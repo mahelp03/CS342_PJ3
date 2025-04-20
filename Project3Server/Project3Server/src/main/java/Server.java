@@ -124,6 +124,14 @@ public class Server {
                                 newUser.senderName = username;
                                 callback.accept(newUser);
                                 updateClients(newUser);
+
+                                double winRate = AccountDatabase.getWinRate(username);
+                                int totalGames = AccountDatabase.getGameCount(username);
+                                String statMessage = winRate + "," + totalGames;
+
+                                Message statInfo = new Message(username, statMessage, MessageType.WINRATE_INFO);
+                                statInfo.senderName = username;
+                                out.writeObject(statInfo);
                             }
                     
                             continue;

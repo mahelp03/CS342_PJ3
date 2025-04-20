@@ -5,5 +5,6 @@ Server$1.class
 Server.class
 LoginHandler.class
 Message.class
+AccountDatabase.class
 GuiServer$1.class
 Server$TheServer.class

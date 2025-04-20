@@ -28,7 +28,7 @@ public class Message implements Serializable {
     public Message(String message) {
         this.type = MessageType.TEXT;
         this.message = message;
-        this.recipient = "ALL";
+        this.recipient = "ALL"; // send to who
     }
     public Message(String recipient, String message, MessageType type) {
         this.recipient = recipient;

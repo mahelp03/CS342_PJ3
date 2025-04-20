@@ -21,6 +21,7 @@ public class GuiClient extends Application {
 
     TextField c1;
     Button b1, b2;
+    Label ratingLabel, gamesLabel;
     HashMap<String, Scene> sceneMap;
     VBox clientBox;
     Client clientConnection;
@@ -129,16 +130,18 @@ public class GuiClient extends Application {
     // lobby
     private Scene buildLobbyScene(String username) {
         // test
+        // double winRate = AccountDatabase.getWinRate(username);
+        // int totalGames = AccountDatabase.getGameCount(username);
         //test end
-
+        
 
         VBox leftPane = new VBox(10);
         leftPane.setPadding(new Insets(10));
         leftPane.setStyle("-fx-background-color: #E6E6FA;");
 
         Label userLabel = new Label("UserName: " + username);
-        Label ratingLabel = new Label("Rating:");
-        Label gamesLabel = new Label("Games:");
+        ratingLabel = new Label("Rating: "); // 초기화 안해주면 조댐댐
+        gamesLabel = new Label("Games: ");
 
         VBox profileBox = new VBox(5, userLabel, ratingLabel, gamesLabel);
         profileBox.setStyle("-fx-border-color: blue; -fx-padding: 10");
@@ -186,7 +189,7 @@ public class GuiClient extends Application {
             }
         });
     }
-    
+        
 
     private void setupConnection() {
         clientConnection = new Client(data -> {
@@ -228,6 +231,23 @@ public class GuiClient extends Application {
                         listUsers.getItems().remove(data.recipient); // 로그아웃시 좌측화면에서 접속자 지움움
                         listItems.getItems().add(data.recipient);
                         
+                    });
+                    break;
+                case WINRATE_INFO:
+                    Platform.runLater(() -> {
+                        if(ratingLabel != null && gamesLabel != null){
+                            String[] parts = data.message.split(",");
+                        String winRate = parts[0];
+                        String totalGames = parts[1];
+
+                        ratingLabel.setText("Rating: " + winRate + " %");
+                        gamesLabel.setText("Games: " + totalGames + " games");
+                        }
+                        // 받은 메시지 파싱
+                        
+
+                        // updateLobbyStats(winRate, totalGames);
+    
                     });
                     break;
             }
