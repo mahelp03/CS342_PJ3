@@ -3,6 +3,7 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class Server {
@@ -99,7 +100,7 @@ public class Server {
                     }
 
 
-                    System.out.println("Received message: " + data.message);
+                    System.out.println("Received message: " + data.message); // 테스토용 로그 출력력
 
                     if (data.message.startsWith("SIGNUP:") || data.message.startsWith("LOGIN:")) {
                         String[] parts = data.message.split(":");
@@ -136,7 +137,30 @@ public class Server {
                     
                             continue;
                         }
+                    }else if (data.message.startsWith("ADDFRIEND:")) {
+                        String[] parts = data.message.split(":");
+                        String user = parts[1];
+                        String friend = parts[2];
+                        
+                        if (LoginHandler.getAllUsers().containsKey(friend)) {
+                            boolean success = FriendHander.addFriend(user, friend);
+                            String result = success ? "ADDFRIEND_SUCCESS" : "ADDFRIEND_FAIL";
+                            out.writeObject(new Message(user, result));
+                        } else {
+                            out.writeObject(new Message(user, "ADDFRIEND_FAIL"));
+                        }
+                    
+                        continue;
+                    }else if (data.message.startsWith("GETFRIEND:")) {
+                        String user = data.message.substring("GETFRIEND:".length());
+                        Set<String> friends = FriendHander.getFriends(user);
+                        String friendStr = String.join(",", friends);
+                        out.writeObject(new Message(user, "FRIENDLIST:" + user + ":" + friendStr));
+                        continue;
                     }
+
+
+
                     
 
                     callback.accept(data);

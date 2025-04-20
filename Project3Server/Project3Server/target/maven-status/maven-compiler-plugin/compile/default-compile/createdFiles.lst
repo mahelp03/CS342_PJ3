@@ -1,6 +1,7 @@
 GuiServer.class
 MessageType.class
 Server$ClientThread.class
+FriendHander.class
 Server$1.class
 Server.class
 LoginHandler.class

@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
@@ -21,13 +22,14 @@ public class GuiClient extends Application {
 
     TextField c1;
     Button b1, b2;
-    Label ratingLabel, gamesLabel;
+    Label ratingLabel, gamesLabel, AFresultLabel;
     HashMap<String, Scene> sceneMap;
     VBox clientBox;
     Client clientConnection;
     HBox fields;
     ComboBox<String> listUsers;
-    ListView<String> listItems;
+    ListView<String> listItems, FriendList;
+    
 
     // each scenes
     Stage primaryStage;
@@ -154,29 +156,64 @@ public class GuiClient extends Application {
 
         leftPane.getChildren().addAll(profileBox, createRoom, joinRoom, historyList);
 
-        VBox rightPane = new VBox(10); // add friend space
-        rightPane.setPadding(new Insets(10));
-
         Button addFriend = new Button("+ Add Friend");
         Button textMessage = new Button("Text Message");
 
         textMessage.setOnAction(e -> {
-            // isSignUp = false;
-            // setupConnection();
             primaryStage.setScene(chatScene);
         });
 
-        ListView<String> friendList = new ListView<>();
-        friendList.setPrefHeight(200);
+        addFriend.setOnAction(e -> { // goto add friend
+            String currentUsername = usernameField.getText();
+            Scene addFriendScene = buildAddFriendScene(currentUsername);
+            primaryStage.setScene(addFriendScene);
+        });
+        
 
-        rightPane.getChildren().addAll(addFriend, textMessage, friendList);
+        FriendList = new ListView<>();
+        FriendList.setPrefHeight(200);
+        FriendList.setPrefWidth(100);
+        HBox hbox1 = new HBox(10, addFriend, textMessage);
+        VBox vbox1 = new VBox(10, hbox1, FriendList);
+        
 
-        HBox mainLayout = new HBox(20, leftPane, rightPane);
+        // rightPane.getChildren().addAll(addFriend, textMessage, friendList);
+
+        HBox mainLayout = new HBox(20, leftPane, vbox1 );
         mainLayout.setPadding(new Insets(20));
 
-        return new Scene(mainLayout, 800, 400);
+        return new Scene(mainLayout, 600, 400);
     }
 
+    private Scene buildAddFriendScene(String currentUser) {
+        // VBox layout = new VBox(15);
+        // layout.setPadding(new Insets(30));
+        // layout.setStyle("-fx-background-color: #F5F5DC;");
+        AFresultLabel = new Label(); 
+    
+        TextField friendInput = new TextField();
+        friendInput.setPromptText("Enter Username");
+    
+        Button goButton = new Button("Go");
+
+        
+    
+        goButton.setOnAction(e -> {
+            String friendName = friendInput.getText().trim();
+            if (!friendName.isEmpty()) {
+                String msg = "ADDFRIEND:" + currentUser + ":" + friendName;
+                clientConnection.send(new Message("SERVER", msg));
+            }
+        });
+    
+        Button backButton = new Button("Back");
+        backButton.setOnAction(e -> primaryStage.setScene(lobbyScene));
+        
+        HBox hboxaddf = new HBox(15, friendInput, goButton, backButton);
+        VBox vboxaddf  = new VBox(10, hboxaddf, AFresultLabel);
+        hboxaddf.setPadding(new Insets(20,5,20,5));
+        return new Scene(vboxaddf, 400, 300);
+    }
 
 
     private void showErrorMessage(String message) {
@@ -189,6 +226,8 @@ public class GuiClient extends Application {
             }
         });
     }
+
+
         
 
     private void setupConnection() {
@@ -196,11 +235,23 @@ public class GuiClient extends Application {
             switch (data.type) {
                 case TEXT:
                     Platform.runLater(() -> {
+                        if (data.message.startsWith("FRIENDLIST:")) {
+                            String[] parts = data.message.split(":");
+                            if (parts.length == 3) {
+                                String[] friends = parts[2].split(",");
+                                FriendList.getItems().setAll(friends);
+                            }
+                            return;
+                        }
+                        
+
                         if (data.message.equals("LOGIN_SUCCESS") || data.message.equals("SIGNUP_SUCCESS")) {
                             // primaryStage.setScene(chatScene); // 테스트용용
                             // primaryStage.setTitle("Client Chat");
                             String username = usernameField.getText();
-                            this.lobbyScene = buildLobbyScene(username); 
+                            this.lobbyScene = buildLobbyScene(username);
+                            
+                            clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
                             Platform.runLater(() -> {
                                 primaryStage.setScene(lobbyScene);
                                 primaryStage.setTitle("Game Lobby");
@@ -213,7 +264,17 @@ public class GuiClient extends Application {
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
-                        } else {
+                        }else if(data.message.equals("ADDFRIEND_SUCCESS")){
+                            if (AFresultLabel != null)
+                                AFresultLabel.setText("User is added");
+                            String username = usernameField.getText();
+                            clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
+                        }else if(data.message.equals("ADDFRIEND_FAIL")){
+                            // showPopup("User not found or already added.");
+                            if (AFresultLabel != null)
+                                AFresultLabel.setText("User not found or already added.");
+
+                        }else {
                             listItems.getItems().add(data.recipient + ": " + data.message);
                         }
                     });
