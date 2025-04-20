@@ -29,7 +29,7 @@ public class Server {
                     count++;
                 }
             } catch (Exception e) {
-                callback.accept(new Message(-1, "Server did not launch"));
+                callback.accept(new Message("", "Server did not launch", MessageType.TEXT));
             }
         }
     }
@@ -40,6 +40,7 @@ public class Server {
         int count;
         ObjectInputStream in;
         ObjectOutputStream out;
+        private String username;
 
         ClientThread(Socket s, int count) {
             this.connection = s;
@@ -50,7 +51,7 @@ public class Server {
             switch (message.type) {
                 case TEXT:
                     for (ClientThread t : clients) {
-                        if (message.recipient == -1 || message.recipient == t.count) {
+                        if (message.recipient.equals("ALL") || message.recipient.equals(t.username)) {
                             try {
                                 t.out.writeObject(message);
                             } catch (Exception e) {
@@ -111,14 +112,14 @@ public class Server {
                                     ? LoginHandler.signup(username, password)
                                     : LoginHandler.login(username, password);
                     
-                            Message response = new Message(count, result.equals("OK") 
+                            Message response = new Message(username, result.equals("OK") 
                                 ? (type + "_SUCCESS") 
                                 : (type + "_FAIL"));
                     
                             out.writeObject(response);
                     
                             if (result.equals("OK")) {
-                                Message newUser = new Message(count, true);
+                                Message newUser = new Message(username, true);
                                 callback.accept(newUser);
                                 updateClients(newUser);
                             }
@@ -133,9 +134,9 @@ public class Server {
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    System.out.println("Client #" + count + " disconnected due to error.");
+                    System.out.println("Client #" + username + " disconnected due to error.");
 
-                    Message discon = new Message(count, false);  // DISCONNECT
+                    Message discon = new Message(username, false);  // DISCONNECT
                     callback.accept(discon);
                     updateClients(discon);
                     clients.remove(this);

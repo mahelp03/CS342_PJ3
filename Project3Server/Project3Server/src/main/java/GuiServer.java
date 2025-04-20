@@ -102,6 +102,8 @@ public class GuiServer extends Application {
 
         return new Scene(messagePane, 600, 400);
     }
+
+    
     private Scene createAccountScene() {
         Label label = new Label("Registered Accounts");
         label.setFont(Font.font("Serif", 18));

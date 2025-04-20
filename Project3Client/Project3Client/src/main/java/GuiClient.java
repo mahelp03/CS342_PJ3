@@ -25,7 +25,7 @@ public class GuiClient extends Application {
     VBox clientBox;
     Client clientConnection;
     HBox fields;
-    ComboBox<Integer> listUsers;
+    ComboBox<String> listUsers;
     ListView<String> listItems;
 
     Stage primaryStage;
@@ -105,9 +105,10 @@ public class GuiClient extends Application {
     }
 
     private Scene buildChatScene() {
+        ComboBox<String> listUsers;
         listUsers = new ComboBox<>();
-        listUsers.getItems().add(-1);
-        listUsers.setValue(-1);
+        listUsers.getItems().add("ALL");
+        listUsers.setValue("ALL");
 
         listItems = new ListView<>();
         c1 = new TextField();
@@ -173,7 +174,7 @@ public class GuiClient extends Application {
     
                 case DISCONNECT:
                     Platform.runLater(() -> {
-                        listUsers.getItems().remove((Integer) data.recipient);
+                        listUsers.getItems().remove(data.recipient);
                         listItems.getItems().add(data.recipient + " has disconnected!");
                     });
                     break;
@@ -192,7 +193,7 @@ public class GuiClient extends Application {
                 String password = passwordField.getText();
                 String payload = (isSignUp ? "SIGNUP" : "LOGIN") + ":" + username + ":" + password;
     
-                clientConnection.send(new Message(-1, payload));
+                clientConnection.send(new Message("ALL", payload));
     
             } catch (Exception e) {
                 e.printStackTrace();
