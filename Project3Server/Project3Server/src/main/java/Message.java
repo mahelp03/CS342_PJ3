@@ -18,10 +18,10 @@ public class Message implements Serializable {
         this.recipient = recipient;
         if (connect) {
             this.type = MessageType.NEWUSER;
-            this.message = "User " + recipient + " has joined!";
+            this.message = "User " + recipient + " has joined!!";
         } else {
             this.type = MessageType.DISCONNECT;
-            this.message = "User " + recipient + " has disconnected!";
+            this.message = "User " + recipient + " has disconnected!!";
         }
     }
 

@@ -77,34 +77,22 @@ public class GuiClient extends Application {
             signupButton.setDisable(!agreeCheck.isSelected());
         });
 
-        // loginButton.setOnAction(e -> {
-        //     isSignUp = false;
-        //     setupConnection();
-        //     primaryStage.setScene(chatScene);
-        //     primaryStage.setTitle("Client Chat");
-        // });
         loginButton.setOnAction(e -> {
             isSignUp = false;
-            setupConnection(); // ✅ 씬 전환은 여기서 하지 않음!
+            setupConnection();
         });
         
         signupButton.setOnAction(e -> {
             isSignUp = true;
-            setupConnection(); // ✅ 씬 전환 제거!
+            setupConnection();
         });
         
-        //signupButton.setOnAction(e -> {
-        //     isSignUp = true;
-        //     setupConnection();
-        //     primaryStage.setScene(chatScene);
-        //     primaryStage.setTitle("Client Chat");
-        // });
 
         loginBox.getChildren().addAll(title, usernameField, passwordField, agreeCheck, loginButton, signupButton);
-        return new Scene(loginBox, 400, 300);
+        return new Scene(loginBox, 400, 400);
     }
 
-    private Scene buildChatScene() {
+    private Scene buildChatScene() { // 로그인 화면 대신 사용중중
         ComboBox<String> listUsers;
         listUsers = new ComboBox<>();
         listUsers.getItems().add("ALL");
@@ -168,14 +156,15 @@ public class GuiClient extends Application {
                 case NEWUSER:
                     Platform.runLater(() -> {
                         listUsers.getItems().add(data.recipient);
-                        listItems.getItems().add(data.recipient + " has joined!");
+                        listItems.getItems().add(data.recipient );
                     });
                     break;
     
                 case DISCONNECT:
                     Platform.runLater(() -> {
-                        listUsers.getItems().remove(data.recipient);
-                        listItems.getItems().add(data.recipient + " has disconnected!");
+                        listUsers.getItems().remove(data.recipient); // 로그아웃시 좌측화면에서 접속자 지움움
+                        listItems.getItems().add(data.recipient);
+                        
                     });
                     break;
             }

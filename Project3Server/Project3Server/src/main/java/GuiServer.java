@@ -39,22 +39,28 @@ public class GuiServer extends Application {
 
         primaryStage.setOnCloseRequest((WindowEvent t) -> System.exit(0));
 
+        
+
         serverConnection = new Server(data -> {
+
+            String displayName = data.senderName != null ? data.senderName : data.recipient;
             if (listItems == null || listUsers == null) return;
             switch (data.type) {
                 case TEXT:
-                    listItems.getItems().add(data.recipient + ": " + data.message);
+                    listItems.getItems().add(displayName);
                     break;
                 case NEWUSER:
                     listUsers.getItems().add(String.valueOf(data.recipient));
-                    listItems.getItems().add(data.recipient + " has joined!");
+                    listItems.getItems().add(displayName + " has joined!");
                     refreshAccountTable();
                     break;
                 case DISCONNECT:
-                    listUsers.getItems().remove(String.valueOf(data.recipient));
-                    listItems.getItems().add(data.recipient + " has disconnected!");
+                    
+                    listItems.getItems().add(displayName + " has disconnected!!!!!!!");
+                    listUsers.getItems().remove(data.recipient);
                     break;
             }
+            
         });
     }
 
@@ -103,7 +109,7 @@ public class GuiServer extends Application {
         return new Scene(messagePane, 600, 400);
     }
 
-    
+
     private Scene createAccountScene() {
         Label label = new Label("Registered Accounts");
         label.setFont(Font.font("Serif", 18));

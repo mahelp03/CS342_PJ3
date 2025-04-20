@@ -24,19 +24,19 @@ public class ClientThread extends Thread {
                 if (cmd instanceof String) {
                     String command = (String) cmd;
                     if (command.equals("SIGNUP") || command.equals("LOGIN")) {
-                        String user = (String) in.readObject();
-                        String pw = (String) in.readObject();
+                        String username = (String) in.readObject();
+                        String password = (String) in.readObject();
 
                         String result = command.equals("SIGNUP")
-                                ? LoginHandler.signup(user, pw)
-                                : LoginHandler.login(user, pw);
+                                ? LoginHandler.signup(username, password)
+                                : LoginHandler.login(username, password);
 
                         out.writeObject(result);
                         out.flush();
 
                         if ("OK".equals(result)) {
-                            this.username = user;
-                            System.out.println("[Server] " + user + " authenticated successfully.");
+                            this.username = username;
+                            System.out.println("[Server] " + username + " authenticated successfully.");
                         }
                     } else if (command.equals("MSG")) {
                         String msg = (String) in.readObject();
