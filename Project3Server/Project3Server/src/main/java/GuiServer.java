@@ -44,10 +44,10 @@ public class GuiServer extends Application {
         serverConnection = new Server(data -> {
 
             String displayName = data.senderName != null ? data.senderName : data.recipient;
-            if (listItems == null || listUsers == null) return;
+            // if (listItems == null || listUsers == null) return;
             switch (data.type) {
                 case TEXT:
-                    listItems.getItems().add(displayName);
+                    // listItems.getItems().add(displayName);
                     break;
                 case NEWUSER:
                     listUsers.getItems().add(String.valueOf(data.recipient));
@@ -55,9 +55,9 @@ public class GuiServer extends Application {
                     refreshAccountTable();
                     break;
                 case DISCONNECT:
-                    
-                    listItems.getItems().add(displayName + " has disconnected!!!!!!!");
+                    listItems.getItems().add(data.senderName + " has disconnected!!!!!!!");
                     listUsers.getItems().remove(data.recipient);
+                    refreshAccountTable();
                     break;
             }
             

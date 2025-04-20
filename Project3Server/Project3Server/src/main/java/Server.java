@@ -119,7 +119,9 @@ public class Server {
                             out.writeObject(response);
                     
                             if (result.equals("OK")) {
+                                this.username = username;
                                 Message newUser = new Message(username, true);
+                                newUser.senderName = username;
                                 callback.accept(newUser);
                                 updateClients(newUser);
                             }
@@ -136,7 +138,8 @@ public class Server {
                     e.printStackTrace();
                     System.out.println("Client #" + username + " disconnected due to error.");
 
-                    Message discon = new Message(username, false);  // DISCONNECT
+                    Message discon = new Message(username != null ? username : "UNKNOWN", false);
+                    discon.senderName = username != null ? username : "UNKNOWN";
                     callback.accept(discon);
                     updateClients(discon);
                     clients.remove(this);
