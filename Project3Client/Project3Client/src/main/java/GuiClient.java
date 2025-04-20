@@ -20,7 +20,7 @@ import javafx.stage.WindowEvent;
 public class GuiClient extends Application {
 
     TextField c1;
-    Button b1;
+    Button b1, b2;
     HashMap<String, Scene> sceneMap;
     VBox clientBox;
     Client clientConnection;
@@ -28,9 +28,11 @@ public class GuiClient extends Application {
     ComboBox<String> listUsers;
     ListView<String> listItems;
 
+    // each scenes
     Stage primaryStage;
     Scene loginScene;
     Scene chatScene;
+    Scene lobbyScene;
 
     TextField usernameField;
     PasswordField passwordField;
@@ -47,6 +49,7 @@ public class GuiClient extends Application {
 
         this.loginScene = buildLoginScene();
         this.chatScene = buildChatScene();
+        // this.lobbyScene = buildLobbyScene();
 
         primaryStage.setScene(loginScene);
         primaryStage.show();
@@ -101,13 +104,19 @@ public class GuiClient extends Application {
         listItems = new ListView<>();
         c1 = new TextField();
         b1 = new Button("Send");
+        b2 = new Button("Back");
+        b2.setPadding(new Insets(0,0,0,30));
 
-        fields = new HBox(10, listUsers, b1);
+        fields = new HBox(10, listUsers, b1, b2);
         fields.setPadding(new Insets(5));
 
         b1.setOnAction(e -> {
             clientConnection.send(new Message(listUsers.getValue(), c1.getText()));
             c1.clear();
+        });
+
+        b2.setOnAction(e -> {
+            primaryStage.setScene(lobbyScene);
         });
 
         clientBox = new VBox(10, c1, fields, listItems);
@@ -116,6 +125,56 @@ public class GuiClient extends Application {
 
         return new Scene(clientBox, 400, 300);
     }
+
+    // lobby
+    private Scene buildLobbyScene(String username) {
+        // test
+        //test end
+
+
+        VBox leftPane = new VBox(10);
+        leftPane.setPadding(new Insets(10));
+        leftPane.setStyle("-fx-background-color: #E6E6FA;");
+
+        Label userLabel = new Label("UserName: " + username);
+        Label ratingLabel = new Label("Rating:");
+        Label gamesLabel = new Label("Games:");
+
+        VBox profileBox = new VBox(5, userLabel, ratingLabel, gamesLabel);
+        profileBox.setStyle("-fx-border-color: blue; -fx-padding: 10");
+
+        Button createRoom = new Button("Create Room");
+        Button joinRoom = new Button("Join");
+
+        ListView<String> historyList = new ListView<>();
+        historyList.getItems().add("History (Recent 3-5 games)");
+
+        leftPane.getChildren().addAll(profileBox, createRoom, joinRoom, historyList);
+
+        VBox rightPane = new VBox(10); // add friend space
+        rightPane.setPadding(new Insets(10));
+
+        Button addFriend = new Button("+ Add Friend");
+        Button textMessage = new Button("Text Message");
+
+        textMessage.setOnAction(e -> {
+            // isSignUp = false;
+            // setupConnection();
+            primaryStage.setScene(chatScene);
+        });
+
+        ListView<String> friendList = new ListView<>();
+        friendList.setPrefHeight(200);
+
+        rightPane.getChildren().addAll(addFriend, textMessage, friendList);
+
+        HBox mainLayout = new HBox(20, leftPane, rightPane);
+        mainLayout.setPadding(new Insets(20));
+
+        return new Scene(mainLayout, 800, 400);
+    }
+
+
 
     private void showErrorMessage(String message) {
         Label errorLabel = new Label(message);
@@ -135,13 +194,17 @@ public class GuiClient extends Application {
                 case TEXT:
                     Platform.runLater(() -> {
                         if (data.message.equals("LOGIN_SUCCESS") || data.message.equals("SIGNUP_SUCCESS")) {
-                            primaryStage.setScene(chatScene);
-                            primaryStage.setTitle("Client Chat");
+                            // primaryStage.setScene(chatScene); // 테스트용용
+                            // primaryStage.setTitle("Client Chat");
+                            String username = usernameField.getText();
+                            this.lobbyScene = buildLobbyScene(username); 
+                            Platform.runLater(() -> {
+                                primaryStage.setScene(lobbyScene);
+                                primaryStage.setTitle("Game Lobby");
+                            });
+
                         } else if (data.message.equals("LOGIN_FAIL") || data.message.equals("SIGNUP_FAIL")) {
-                            // ✅ 실패 시 메시지 표시
                             showErrorMessage("Login Failed");
-    
-                            // ✅ 서버 연결 끊기
                             try {
                                 clientConnection.close();
                             } catch (Exception e) {
