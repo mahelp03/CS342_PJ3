@@ -3,6 +3,7 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class Server {
@@ -29,7 +30,7 @@ public class Server {
                     count++;
                 }
             } catch (Exception e) {
-                callback.accept(new Message(-1, "Server did not launch"));
+                callback.accept(new Message("", "Server did not launch", MessageType.TEXT));
             }
         }
     }
@@ -40,6 +41,7 @@ public class Server {
         int count;
         ObjectInputStream in;
         ObjectOutputStream out;
+        private String username;
 
         ClientThread(Socket s, int count) {
             this.connection = s;
@@ -50,7 +52,7 @@ public class Server {
             switch (message.type) {
                 case TEXT:
                     for (ClientThread t : clients) {
-                        if (message.recipient == -1 || message.recipient == t.count) {
+                        if (message.recipient.equals("ALL") || message.recipient.equals(t.username)) {
                             try {
                                 t.out.writeObject(message);
                             } catch (Exception e) {
@@ -98,7 +100,7 @@ public class Server {
                     }
 
 
-                    System.out.println("Received message: " + data.message);
+                    System.out.println("Received message: " + data.message); // 테스토용 로그 출력력
 
                     if (data.message.startsWith("SIGNUP:") || data.message.startsWith("LOGIN:")) {
                         String[] parts = data.message.split(":");
@@ -111,21 +113,54 @@ public class Server {
                                     ? LoginHandler.signup(username, password)
                                     : LoginHandler.login(username, password);
                     
-                            Message response = new Message(count, result.equals("OK") 
+                            Message response = new Message(username, result.equals("OK") 
                                 ? (type + "_SUCCESS") 
                                 : (type + "_FAIL"));
                     
                             out.writeObject(response);
                     
                             if (result.equals("OK")) {
-                                Message newUser = new Message(count, true);
+                                this.username = username;
+                                Message newUser = new Message(username, true);
+                                newUser.senderName = username;
                                 callback.accept(newUser);
                                 updateClients(newUser);
+
+                                double winRate = AccountDatabase.getWinRate(username);
+                                int totalGames = AccountDatabase.getGameCount(username);
+                                String statMessage = winRate + "," + totalGames;
+
+                                Message statInfo = new Message(username, statMessage, MessageType.WINRATE_INFO);
+                                statInfo.senderName = username;
+                                out.writeObject(statInfo);
                             }
                     
                             continue;
                         }
+                    }else if (data.message.startsWith("ADDFRIEND:")) {
+                        String[] parts = data.message.split(":");
+                        String user = parts[1];
+                        String friend = parts[2];
+                        
+                        if (LoginHandler.getAllUsers().containsKey(friend)) {
+                            boolean success = FriendHander.addFriend(user, friend);
+                            String result = success ? "ADDFRIEND_SUCCESS" : "ADDFRIEND_FAIL";
+                            out.writeObject(new Message(user, result));
+                        } else {
+                            out.writeObject(new Message(user, "ADDFRIEND_FAIL"));
+                        }
+                    
+                        continue;
+                    }else if (data.message.startsWith("GETFRIEND:")) {
+                        String user = data.message.substring("GETFRIEND:".length());
+                        Set<String> friends = FriendHander.getFriends(user);
+                        String friendStr = String.join(",", friends);
+                        out.writeObject(new Message(user, "FRIENDLIST:" + user + ":" + friendStr));
+                        continue;
                     }
+
+
+
                     
 
                     callback.accept(data);
@@ -133,9 +168,10 @@ public class Server {
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    System.out.println("Client #" + count + " disconnected due to error.");
+                    System.out.println("Client #" + username + " disconnected due to error.");
 
-                    Message discon = new Message(count, false);  // DISCONNECT
+                    Message discon = new Message(username != null ? username : "UNKNOWN", false);
+                    discon.senderName = username != null ? username : "UNKNOWN";
                     callback.accept(discon);
                     updateClients(discon);
                     clients.remove(this);

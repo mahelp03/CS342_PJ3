@@ -5,29 +5,35 @@ public class Message implements Serializable {
 
     public MessageType type;
     public String message;
-    public int recipient;
+    public String recipient;
     public String senderName;
 
-    public Message(int recipient, String message) {
+    public Message(String recipient, String message) {
         this.type = MessageType.TEXT;
         this.recipient = recipient;
         this.message = message;
     }
 
-    public Message(int recipient, boolean connect) {
+    public Message(String recipient, boolean connect) {
         this.recipient = recipient;
         if (connect) {
             this.type = MessageType.NEWUSER;
-            this.message = "User " + recipient + " has joined!";
+            this.message = "User " + recipient + " has joined!!";
         } else {
             this.type = MessageType.DISCONNECT;
-            this.message = "User " + recipient + " has disconnected!";
+            this.message = "User " + recipient + " has disconnected!!";
         }
     }
 
     public Message(String message) {
         this.type = MessageType.TEXT;
         this.message = message;
-        this.recipient = -1;
+        this.recipient = "ALL";
     }
+    public Message(String recipient, String message, MessageType type) {
+        this.recipient = recipient;
+        this.message = message;
+        this.type = type;
+    }
+    
 }

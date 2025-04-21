@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
@@ -20,17 +21,21 @@ import javafx.stage.WindowEvent;
 public class GuiClient extends Application {
 
     TextField c1;
-    Button b1;
+    Button b1, b2;
+    Label ratingLabel, gamesLabel, AFresultLabel;
     HashMap<String, Scene> sceneMap;
     VBox clientBox;
     Client clientConnection;
     HBox fields;
-    ComboBox<Integer> listUsers;
-    ListView<String> listItems;
+    ComboBox<String> listUsers;
+    ListView<String> listItems, FriendList;
+    
 
+    // each scenes
     Stage primaryStage;
     Scene loginScene;
     Scene chatScene;
+    Scene lobbyScene;
 
     TextField usernameField;
     PasswordField passwordField;
@@ -47,6 +52,7 @@ public class GuiClient extends Application {
 
         this.loginScene = buildLoginScene();
         this.chatScene = buildChatScene();
+        // this.lobbyScene = buildLobbyScene();
 
         primaryStage.setScene(loginScene);
         primaryStage.show();
@@ -77,48 +83,43 @@ public class GuiClient extends Application {
             signupButton.setDisable(!agreeCheck.isSelected());
         });
 
-        // loginButton.setOnAction(e -> {
-        //     isSignUp = false;
-        //     setupConnection();
-        //     primaryStage.setScene(chatScene);
-        //     primaryStage.setTitle("Client Chat");
-        // });
         loginButton.setOnAction(e -> {
             isSignUp = false;
-            setupConnection(); // ✅ 씬 전환은 여기서 하지 않음!
+            setupConnection();
         });
         
         signupButton.setOnAction(e -> {
             isSignUp = true;
-            setupConnection(); // ✅ 씬 전환 제거!
+            setupConnection();
         });
         
-        //signupButton.setOnAction(e -> {
-        //     isSignUp = true;
-        //     setupConnection();
-        //     primaryStage.setScene(chatScene);
-        //     primaryStage.setTitle("Client Chat");
-        // });
 
         loginBox.getChildren().addAll(title, usernameField, passwordField, agreeCheck, loginButton, signupButton);
-        return new Scene(loginBox, 400, 300);
+        return new Scene(loginBox, 400, 400);
     }
 
-    private Scene buildChatScene() {
+    private Scene buildChatScene() { // 로그인 화면 대신 사용중중
+        ComboBox<String> listUsers;
         listUsers = new ComboBox<>();
-        listUsers.getItems().add(-1);
-        listUsers.setValue(-1);
+        listUsers.getItems().add("ALL");
+        listUsers.setValue("ALL");
 
         listItems = new ListView<>();
         c1 = new TextField();
         b1 = new Button("Send");
+        b2 = new Button("Back");
+        b2.setPadding(new Insets(0,0,0,30));
 
-        fields = new HBox(10, listUsers, b1);
+        fields = new HBox(10, listUsers, b1, b2);
         fields.setPadding(new Insets(5));
 
         b1.setOnAction(e -> {
             clientConnection.send(new Message(listUsers.getValue(), c1.getText()));
             c1.clear();
+        });
+
+        b2.setOnAction(e -> {
+            primaryStage.setScene(lobbyScene);
         });
 
         clientBox = new VBox(10, c1, fields, listItems);
@@ -127,6 +128,93 @@ public class GuiClient extends Application {
 
         return new Scene(clientBox, 400, 300);
     }
+
+    // lobby
+    private Scene buildLobbyScene(String username) {
+        // test
+        // double winRate = AccountDatabase.getWinRate(username);
+        // int totalGames = AccountDatabase.getGameCount(username);
+        //test end
+        
+
+        VBox leftPane = new VBox(10);
+        leftPane.setPadding(new Insets(10));
+        leftPane.setStyle("-fx-background-color: #E6E6FA;");
+
+        Label userLabel = new Label("UserName: " + username);
+        ratingLabel = new Label("Rating: "); // 초기화 안해주면 조댐댐
+        gamesLabel = new Label("Games: ");
+
+        VBox profileBox = new VBox(5, userLabel, ratingLabel, gamesLabel);
+        profileBox.setStyle("-fx-border-color: blue; -fx-padding: 10");
+
+        Button createRoom = new Button("Create Room");
+        Button joinRoom = new Button("Join");
+
+        ListView<String> historyList = new ListView<>();
+        historyList.getItems().add("History (Recent 3-5 games)");
+
+        leftPane.getChildren().addAll(profileBox, createRoom, joinRoom, historyList);
+
+        Button addFriend = new Button("+ Add Friend");
+        Button textMessage = new Button("Text Message");
+
+        textMessage.setOnAction(e -> {
+            primaryStage.setScene(chatScene);
+        });
+
+        addFriend.setOnAction(e -> { // goto add friend
+            String currentUsername = usernameField.getText();
+            Scene addFriendScene = buildAddFriendScene(currentUsername);
+            primaryStage.setScene(addFriendScene);
+        });
+        
+
+        FriendList = new ListView<>();
+        FriendList.setPrefHeight(200);
+        FriendList.setPrefWidth(100);
+        HBox hbox1 = new HBox(10, addFriend, textMessage);
+        VBox vbox1 = new VBox(10, hbox1, FriendList);
+        
+
+        // rightPane.getChildren().addAll(addFriend, textMessage, friendList);
+
+        HBox mainLayout = new HBox(20, leftPane, vbox1 );
+        mainLayout.setPadding(new Insets(20));
+
+        return new Scene(mainLayout, 600, 400);
+    }
+
+    private Scene buildAddFriendScene(String currentUser) {
+        // VBox layout = new VBox(15);
+        // layout.setPadding(new Insets(30));
+        // layout.setStyle("-fx-background-color: #F5F5DC;");
+        AFresultLabel = new Label(); 
+    
+        TextField friendInput = new TextField();
+        friendInput.setPromptText("Enter Username");
+    
+        Button goButton = new Button("Go");
+
+        
+    
+        goButton.setOnAction(e -> {
+            String friendName = friendInput.getText().trim();
+            if (!friendName.isEmpty()) {
+                String msg = "ADDFRIEND:" + currentUser + ":" + friendName;
+                clientConnection.send(new Message("SERVER", msg));
+            }
+        });
+    
+        Button backButton = new Button("Back");
+        backButton.setOnAction(e -> primaryStage.setScene(lobbyScene));
+        
+        HBox hboxaddf = new HBox(15, friendInput, goButton, backButton);
+        VBox vboxaddf  = new VBox(10, hboxaddf, AFresultLabel);
+        hboxaddf.setPadding(new Insets(20,5,20,5));
+        return new Scene(vboxaddf, 400, 300);
+    }
+
 
     private void showErrorMessage(String message) {
         Label errorLabel = new Label(message);
@@ -138,27 +226,55 @@ public class GuiClient extends Application {
             }
         });
     }
-    
+
+
+        
 
     private void setupConnection() {
         clientConnection = new Client(data -> {
             switch (data.type) {
                 case TEXT:
                     Platform.runLater(() -> {
+                        if (data.message.startsWith("FRIENDLIST:")) {
+                            String[] parts = data.message.split(":");
+                            if (parts.length == 3) {
+                                String[] friends = parts[2].split(",");
+                                FriendList.getItems().setAll(friends);
+                            }
+                            return;
+                        }
+                        
+
                         if (data.message.equals("LOGIN_SUCCESS") || data.message.equals("SIGNUP_SUCCESS")) {
-                            primaryStage.setScene(chatScene);
-                            primaryStage.setTitle("Client Chat");
+                            // primaryStage.setScene(chatScene); // 테스트용용
+                            // primaryStage.setTitle("Client Chat");
+                            String username = usernameField.getText();
+                            this.lobbyScene = buildLobbyScene(username);
+                            
+                            clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
+                            Platform.runLater(() -> {
+                                primaryStage.setScene(lobbyScene);
+                                primaryStage.setTitle("Game Lobby");
+                            });
+
                         } else if (data.message.equals("LOGIN_FAIL") || data.message.equals("SIGNUP_FAIL")) {
-                            // ✅ 실패 시 메시지 표시
                             showErrorMessage("Login Failed");
-    
-                            // ✅ 서버 연결 끊기
                             try {
                                 clientConnection.close();
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
-                        } else {
+                        }else if(data.message.equals("ADDFRIEND_SUCCESS")){
+                            if (AFresultLabel != null)
+                                AFresultLabel.setText("User is added");
+                            String username = usernameField.getText();
+                            clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
+                        }else if(data.message.equals("ADDFRIEND_FAIL")){
+                            // showPopup("User not found or already added.");
+                            if (AFresultLabel != null)
+                                AFresultLabel.setText("User not found or already added.");
+
+                        }else {
                             listItems.getItems().add(data.recipient + ": " + data.message);
                         }
                     });
@@ -167,14 +283,32 @@ public class GuiClient extends Application {
                 case NEWUSER:
                     Platform.runLater(() -> {
                         listUsers.getItems().add(data.recipient);
-                        listItems.getItems().add(data.recipient + " has joined!");
+                        listItems.getItems().add(data.recipient );
                     });
                     break;
     
                 case DISCONNECT:
                     Platform.runLater(() -> {
-                        listUsers.getItems().remove((Integer) data.recipient);
-                        listItems.getItems().add(data.recipient + " has disconnected!");
+                        listUsers.getItems().remove(data.recipient); // 로그아웃시 좌측화면에서 접속자 지움움
+                        listItems.getItems().add(data.recipient);
+                        
+                    });
+                    break;
+                case WINRATE_INFO:
+                    Platform.runLater(() -> {
+                        if(ratingLabel != null && gamesLabel != null){
+                            String[] parts = data.message.split(",");
+                        String winRate = parts[0];
+                        String totalGames = parts[1];
+
+                        ratingLabel.setText("Rating: " + winRate + " %");
+                        gamesLabel.setText("Games: " + totalGames + " games");
+                        }
+                        // 받은 메시지 파싱
+                        
+
+                        // updateLobbyStats(winRate, totalGames);
+    
                     });
                     break;
             }
@@ -192,7 +326,7 @@ public class GuiClient extends Application {
                 String password = passwordField.getText();
                 String payload = (isSignUp ? "SIGNUP" : "LOGIN") + ":" + username + ":" + password;
     
-                clientConnection.send(new Message(-1, payload));
+                clientConnection.send(new Message("ALL", payload));
     
             } catch (Exception e) {
                 e.printStackTrace();

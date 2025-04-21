@@ -1,10 +1,11 @@
 GuiServer.class
 MessageType.class
 Server$ClientThread.class
+FriendHander.class
 Server$1.class
 Server.class
-ClientThread.class
 LoginHandler.class
 Message.class
+AccountDatabase.class
 GuiServer$1.class
 Server$TheServer.class

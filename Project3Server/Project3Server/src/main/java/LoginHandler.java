@@ -7,6 +7,8 @@ public class LoginHandler {
     public static synchronized String signup(String username, String password) {
         if (accounts.containsKey(username)) return "SIGNUP_FAIL";
         accounts.put(username, password);
+
+        AccountDatabase.initUser(username);
         return "OK";
     }
 

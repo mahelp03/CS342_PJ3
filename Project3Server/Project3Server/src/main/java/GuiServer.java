@@ -39,22 +39,28 @@ public class GuiServer extends Application {
 
         primaryStage.setOnCloseRequest((WindowEvent t) -> System.exit(0));
 
+        
+
         serverConnection = new Server(data -> {
-            if (listItems == null || listUsers == null) return;
+
+            String displayName = data.senderName != null ? data.senderName : data.recipient;
+            // if (listItems == null || listUsers == null) return;
             switch (data.type) {
                 case TEXT:
-                    listItems.getItems().add(data.recipient + ": " + data.message);
+                    // listItems.getItems().add(displayName);
                     break;
                 case NEWUSER:
                     listUsers.getItems().add(String.valueOf(data.recipient));
-                    listItems.getItems().add(data.recipient + " has joined!");
+                    listItems.getItems().add(displayName + " has joined!");
                     refreshAccountTable();
                     break;
                 case DISCONNECT:
-                    listUsers.getItems().remove(String.valueOf(data.recipient));
-                    listItems.getItems().add(data.recipient + " has disconnected!");
+                    listItems.getItems().add(data.senderName + " has disconnected!!!!!!!");
+                    listUsers.getItems().remove(data.recipient);
+                    refreshAccountTable();
                     break;
             }
+            
         });
     }
 
@@ -102,6 +108,8 @@ public class GuiServer extends Application {
 
         return new Scene(messagePane, 600, 400);
     }
+
+
     private Scene createAccountScene() {
         Label label = new Label("Registered Accounts");
         label.setFont(Font.font("Serif", 18));
@@ -109,14 +117,22 @@ public class GuiServer extends Application {
         // ✅ 두 개의 ListView: 하나는 유저명, 하나는 비밀번호
         ListView<String> usernameList = new ListView<>();
         ListView<String> passwordList = new ListView<>();
+        ListView<String> winRateList = new ListView<>();
+        ListView<String> totalGameList = new ListView<>();
     
         // 🔁 갱신 함수
         Runnable refreshAccounts = () -> {
             usernameList.getItems().clear();
             passwordList.getItems().clear();
+            winRateList.getItems().clear();
+            totalGameList.getItems().clear();
+
             for (Map.Entry<String, String> entry : LoginHandler.getAllUsers().entrySet()) {
+                String username = entry.getKey();
                 usernameList.getItems().add(entry.getKey());
                 passwordList.getItems().add(entry.getValue());
+                winRateList.getItems().add(AccountDatabase.getWinRate(username) + " %");
+                totalGameList.getItems().add(AccountDatabase.getGameCount(username) + " games");
             }
         };
     
@@ -126,11 +142,15 @@ public class GuiServer extends Application {
         // 🔘 레이아웃 구성
         Label usernameLabel = new Label("Username");
         Label passwordLabel = new Label("Password");
+        Label winRateLabel = new Label("WinRate");
+        Label TotalGameLabel = new Label("Total");
     
         VBox usernameBox = new VBox(5, usernameLabel, usernameList);
         VBox passwordBox = new VBox(5, passwordLabel, passwordList);
+        VBox winrateBox = new VBox(5, winRateLabel, winRateList);
+        VBox totalgameBox = new VBox(5, TotalGameLabel, totalGameList);
     
-        HBox listsBox = new HBox(20, usernameBox, passwordBox);
+        HBox listsBox = new HBox(10, usernameBox, passwordBox, winrateBox, totalgameBox);
         listsBox.setAlignment(Pos.CENTER);
         listsBox.setPadding(new Insets(10));
     
@@ -182,6 +202,8 @@ public class GuiServer extends Application {
 
     //     return new Scene(pane, 600, 400);
     // }
+    
+
 
     private void refreshAccountTable() {
         if (accountTable != null) {
