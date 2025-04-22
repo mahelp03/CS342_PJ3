@@ -222,6 +222,19 @@ public class Server {
                         }
                         //continue;
                     }
+
+                    else if (data.message.startsWith("LEAVE_ROOM:")) {
+                        String username = data.message.split(":")[1];
+                    
+                        for (GameRoom room : gameRooms.values()) {
+                            if (room.hasPlayer(username)) {
+                                room.removePlayer(username);
+                                break;
+                            }
+                        }
+                        continue;
+                    }
+                    
                     
                     callback.accept(data);
                     updateClients(data);

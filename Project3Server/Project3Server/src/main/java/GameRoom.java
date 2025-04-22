@@ -31,5 +31,16 @@ public class GameRoom {
     public List<String> getPlayers() {
         return players;
     }
+
+    // join 후 나가면 다시 join이 안돼서 넣음 (버튼이 처음 한번만 작동)
+    public void removePlayer(String username) {
+        players.remove(username);
+    }
+
+    // 얘도 
+    public boolean hasPlayer(String username) {
+        return players.contains(username);
+    }
+    
 }
 

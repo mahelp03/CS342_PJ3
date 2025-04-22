@@ -526,7 +526,12 @@ public class GuiClient extends Application {
 
         Button backBtn = new Button("Exit Room");
         backBtn.setOnAction(e -> {
-            primaryStage.setScene(lobbyScene); // return to lobby
+            clientConnection.send(new Message("SERVER", "LEAVE_ROOM:" + username));
+    
+            Platform.runLater(() -> {
+                Scene freshJoinScene = buildJoinRoomScene(username);
+                primaryStage.setScene(freshJoinScene);
+            });
         });
 
         VBox layout = new VBox(15, header, gameBoard, backBtn);
@@ -544,7 +549,17 @@ public class GuiClient extends Application {
         roomCodeField.setPromptText("Enter Room Code (e.g. R5S89X)");
     
         Button enterBtn = new Button("Enter");
+        enterBtn.setOnAction(e -> {
+            String code = roomCodeField.getText().trim().toUpperCase();
+            if (!code.isEmpty()) {
+                clientConnection.send(new Message("SERVER", "JOIN_ROOM:" + username + ":" + code));
+            }
+        });
+
         Button randomBtn = new Button("Random Join");
+        randomBtn.setOnAction(e -> {
+            clientConnection.send(new Message("SERVER", "JOIN_RANDOM_REQUEST:" + username));
+        });
         Button backBtn = new Button("Back");
     
         /*enterBtn.setOnAction(e -> {
