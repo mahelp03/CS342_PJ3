@@ -223,11 +223,6 @@ public class Server {
                         //continue;
                     }
                     
-
-
-
-                    
-
                     callback.accept(data);
                     updateClients(data);
 

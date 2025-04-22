@@ -370,7 +370,7 @@ public class GuiClient extends Application {
                                 //String username = usernameField.getText();
                                 //primaryStage.setScene(buildGameScene("Room " + roomCode, username));
                                 String[] parts = data.message.split(":");
-                                if (parts.length == 3) {
+                                if (parts.length >= 3) {
                                     String roomName = parts[1];
                                     String roomCode = parts[2];
                                     String username = usernameField.getText();
