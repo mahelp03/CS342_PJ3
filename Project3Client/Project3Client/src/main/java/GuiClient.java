@@ -458,7 +458,7 @@ public class GuiClient extends Application {
         Button backButton = new Button("Back");
         
         // 전꺼
-        /*enterButton.setOnAction(e -> {
+        enterButton.setOnAction(e -> {
             String roomName = roomInput.getText().trim();
             if (!roomName.isEmpty()) {
                 // TODO: Enter game room scene with name `roomName`
@@ -467,11 +467,7 @@ public class GuiClient extends Application {
                 // Placeholder: Replace with actual in-game room logic
                 // primaryStage.setScene(buildGameScene(roomName, username));
             }
-        });*/
-
-        enterButton.setOnAction(e -> {
-            clientConnection.send(new Message("SERVER", "CREATE_ROOM:" + username));
-        });        
+        });     
     
         backButton.setOnAction(e -> {
             primaryStage.setScene(lobbyScene);
