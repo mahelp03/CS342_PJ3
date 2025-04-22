@@ -364,7 +364,7 @@ public class GuiClient extends Application {
                                 String roomName = parts[1];
                                 String roomCode = parts[2];
                                 String username = usernameField.getText();
-                                primaryStage.setScene(buildGameScene(roomName, roomCode, username));
+                                primaryStage.setScene(buildGameScene(roomName, username, roomCode)); //fixed
                             } else if (data.message.startsWith("JOIN_SUCCESS:")) {
                                 //String roomCode = data.message.split(":")[1];
                                 //String username = usernameField.getText();
@@ -374,7 +374,7 @@ public class GuiClient extends Application {
                                     String roomName = parts[1];
                                     String roomCode = parts[2];
                                     String username = usernameField.getText();
-                                    Platform.runLater(() -> primaryStage.setScene(buildGameScene(roomName, roomCode, username)));
+                                    Platform.runLater(() -> primaryStage.setScene(buildGameScene(roomName, username, roomCode))); //fixed
                                 }
                             } else if (data.message.equals("JOIN_FAIL")) {
                                 showErrorMessage("Join Failed: Invalid or full room.");
