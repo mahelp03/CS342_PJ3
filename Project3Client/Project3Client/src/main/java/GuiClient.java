@@ -357,13 +357,25 @@ public class GuiClient extends Application {
                             }
 
                             if (data.message.startsWith("ROOM_CREATED:")) {
-                                String roomCode = data.message.split(":")[1];
+                                //String roomCode = data.message.split(":")[1];
+                                //String username = usernameField.getText();
+                                //primaryStage.setScene(buildGameScene("Room " + roomCode, username));
+                                String[] parts = data.message.split(":");
+                                String roomName = parts[1];
+                                String roomCode = parts[2];
                                 String username = usernameField.getText();
-                                primaryStage.setScene(buildGameScene("Room " + roomCode, username));
+                                primaryStage.setScene(buildGameScene(roomName, roomCode, username));
                             } else if (data.message.startsWith("JOIN_SUCCESS:")) {
-                                String roomCode = data.message.split(":")[1];
-                                String username = usernameField.getText();
-                                primaryStage.setScene(buildGameScene("Room " + roomCode, username));
+                                //String roomCode = data.message.split(":")[1];
+                                //String username = usernameField.getText();
+                                //primaryStage.setScene(buildGameScene("Room " + roomCode, username));
+                                String[] parts = data.message.split(":");
+                                if (parts.length == 3) {
+                                    String roomName = parts[1];
+                                    String roomCode = parts[2];
+                                    String username = usernameField.getText();
+                                    Platform.runLater(() -> primaryStage.setScene(buildGameScene(roomName, roomCode, username)));
+                                }
                             } else if (data.message.equals("JOIN_FAIL")) {
                                 showErrorMessage("Join Failed: Invalid or full room.");
                             } else if (data.message.startsWith("FRIENDLIST:")) {
@@ -461,9 +473,7 @@ public class GuiClient extends Application {
         enterButton.setOnAction(e -> {
             String roomName = roomInput.getText().trim();
             if (!roomName.isEmpty()) {
-                // TODO: Enter game room scene with name `roomName`
-                Scene gameScene = buildGameScene(roomName, username);
-                Platform.runLater(() -> primaryStage.setScene(gameScene));
+                clientConnection.send(new Message("SERVER", "CREATE_ROOM:" + username + ":" + roomName));
                 // Placeholder: Replace with actual in-game room logic
                 // primaryStage.setScene(buildGameScene(roomName, username));
             }
@@ -489,8 +499,8 @@ public class GuiClient extends Application {
         return code.toString();
     }
     
-    private Scene buildGameScene(String roomName, String username) {
-        String roomCode = generateRoomCode(); // random 6-char room code
+    private Scene buildGameScene(String roomName, String username, String roomCode) {
+        //String roomCode = generateRoomCode(); // random 6-char room code
 
         Label header = new Label("Room: " + roomName + " | Code: " + roomCode);
         header.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
@@ -508,21 +518,20 @@ public class GuiClient extends Application {
                 cell.setPrefSize(50, 50);
                 int finalCol = col;
                 cell.setOnAction(e -> {
-                    // TODO: dropToken(finalCol);
                     System.out.println(username + " clicked column " + finalCol);
             });
             gameBoard.add(cell, col, row);
+            }
         }
-    }
 
-    Button backBtn = new Button("Exit Room");
-    backBtn.setOnAction(e -> {
-        primaryStage.setScene(lobbyScene); // return to lobby
-    });
+        Button backBtn = new Button("Exit Room");
+        backBtn.setOnAction(e -> {
+            primaryStage.setScene(lobbyScene); // return to lobby
+        });
 
-    VBox layout = new VBox(15, header, gameBoard, backBtn);
-    layout.setPadding(new Insets(20));
-    return new Scene(layout, 500, 450);
+        VBox layout = new VBox(15, header, gameBoard, backBtn);
+        layout.setPadding(new Insets(20));
+        return new Scene(layout, 500, 450);
     }
 
     private Scene buildJoinRoomScene(String username) {
@@ -541,14 +550,12 @@ public class GuiClient extends Application {
         /*enterBtn.setOnAction(e -> {
             String code = roomCodeField.getText().trim().toUpperCase();
             if (!code.isEmpty()) {
-                // TODO: validate & join this room if exists
                 System.out.println(username + " is joining room with code: " + code);
                 primaryStage.setScene(buildGameScene("Room " + code, username)); // placeholder logic
             }
         });
     
         randomBtn.setOnAction(e -> {
-            // TODO: find a room with only one user
             String randomCode = findAvailableRoom();
             if (randomCode != null) {
                 System.out.println(username + " randomly joining room: " + randomCode);
@@ -581,7 +588,6 @@ public class GuiClient extends Application {
     }
     
     private String findAvailableRoom() {
-        // TODO: Replace with actual request to server for available room
         // Simulate with hardcoded return for now
         return "R5S89X"; // Only return if a valid room with 1 player exists
     }

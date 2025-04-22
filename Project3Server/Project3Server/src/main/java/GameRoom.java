@@ -3,28 +3,33 @@ import java.util.List;
 
 public class GameRoom {
     private final String roomCode;
-    private final List<String> players = new ArrayList<>(2);
+    private final String roomName;
+    private final List<String> players = new ArrayList<>();
 
-    public GameRoom(String code, String creator) {
-        this.roomCode = code;
+    public GameRoom(String roomCode, String roomName, String creator) {
+        this.roomCode = roomCode;
+        this.roomName = roomName;
         this.players.add(creator);
-    }
-
-    public void addPlayer(String username) {
-        if (!isFull() && !players.contains(username)) {
-            players.add(username);
-        }
-    }
-
-    public boolean isFull() {
-        return players.size() == 2;
-    }
-
-    public List<String> getPlayers() {
-        return players;
     }
 
     public String getRoomCode() {
         return roomCode;
     }
+
+    public String getRoomName() {
+        return roomName;
+    }
+
+    public boolean isFull() {
+        return players.size() >= 2;
+    }
+
+    public void addPlayer(String username) {
+        if (!isFull()) players.add(username);
+    }
+
+    public List<String> getPlayers() {
+        return players;
+    }
 }
+
