@@ -243,153 +243,185 @@ public class GuiClient extends Application {
 
         
 
-    private void setupConnection() {
-        clientConnection = new Client(data -> {
-            switch (data.type) {
-                case TEXT:
-                    Platform.runLater(() -> {
-                        if (data.message.startsWith("ROOM_CREATED:")) {
-                            String roomCode = data.message.split(":")[1];
-                            String username = usernameField.getText();
-                            primaryStage.setScene(buildGameScene("Room " + roomCode, username));
-                        } else if (data.message.startsWith("JOIN_SUCCESS:")) {
-                            String roomCode = data.message.split(":")[1];
-                            String username = usernameField.getText();
-                            primaryStage.setScene(buildGameScene("Room " + roomCode, username));
-                        } else if (data.message.equals("JOIN_FAIL")) {
-                            showErrorMessage("Join Failed: Invalid or full room.");
-                        } else if (data.message.startsWith("FRIENDLIST:")) {
-                            String[] parts = data.message.split(":");
-                            if (parts.length == 3) {
-                                String[] friends = parts[2].split(",");
-                                FriendList.getItems().setAll(friends);
-                            }
-                        } else if (data.message.equals("ADDFRIEND_SUCCESS")) {
-                            if (AFresultLabel != null)
-                                AFresultLabel.setText("User is added");
-                            String username = usernameField.getText();
-                            clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
-                        } else if (data.message.equals("ADDFRIEND_FAIL")) {
-                            if (AFresultLabel != null)
-                                AFresultLabel.setText("User not found or already added.");
-                        } else {
-                            listItems.getItems().add(data.recipient + ": " + data.message);
-                        }
-                    });
-                    break;
+    // private void setupConnection() {
+    //     clientConnection = new Client(data -> {
+    //         switch (data.type) {
+    //             case TEXT:
+    //                 Platform.runLater(() -> {
+    //                     if (data.message.startsWith("ROOM_CREATED:")) {
+    //                         String roomCode = data.message.split(":")[1];
+    //                         String username = usernameField.getText();
+    //                         primaryStage.setScene(buildGameScene("Room " + roomCode, username));
+    //                     } else if (data.message.startsWith("JOIN_SUCCESS:")) {
+    //                         String roomCode = data.message.split(":")[1];
+    //                         String username = usernameField.getText();
+    //                         primaryStage.setScene(buildGameScene("Room " + roomCode, username));
+    //                     } else if (data.message.equals("JOIN_FAIL")) {
+    //                         showErrorMessage("Join Failed: Invalid or full room.");
+    //                     } else if (data.message.startsWith("FRIENDLIST:")) {
+    //                         String[] parts = data.message.split(":");
+    //                         if (parts.length == 3) {
+    //                             String[] friends = parts[2].split(",");
+    //                             FriendList.getItems().setAll(friends);
+    //                         }
+    //                     } else if (data.message.equals("ADDFRIEND_SUCCESS")) {
+    //                         if (AFresultLabel != null)
+    //                             AFresultLabel.setText("User is added");
+    //                         String username = usernameField.getText();
+    //                         clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
+    //                     } else if (data.message.equals("ADDFRIEND_FAIL")) {
+    //                         if (AFresultLabel != null)
+    //                             AFresultLabel.setText("User not found or already added.");
+    //                     } else {
+    //                         listItems.getItems().add(data.recipient + ": " + data.message);
+    //                     }
+    //                 });
+    //                 break;
         
-                case NEWUSER:
-                    Platform.runLater(() -> {
-                        listUsers.getItems().add(data.recipient);
-                        listItems.getItems().add(data.recipient);
-                    });
-                    break;
+    //             case NEWUSER:
+    //                 Platform.runLater(() -> {
+    //                     listUsers.getItems().add(data.recipient);
+    //                     listItems.getItems().add(data.recipient);
+    //                 });
+    //                 break;
         
-                case DISCONNECT:
-                    Platform.runLater(() -> {
-                        listUsers.getItems().remove(data.recipient);
-                        listItems.getItems().add(data.recipient);
-                    });
-                    break;
+    //             case DISCONNECT:
+    //                 Platform.runLater(() -> {
+    //                     listUsers.getItems().remove(data.recipient);
+    //                     listItems.getItems().add(data.recipient);
+    //                 });
+    //                 break;
         
-                case WINRATE_INFO:
-                    Platform.runLater(() -> {
-                        if (ratingLabel != null && gamesLabel != null) {
-                            String[] parts = data.message.split(",");
-                            String winRate = parts[0];
-                            String totalGames = parts[1];
-                            ratingLabel.setText("Rating: " + winRate + " %");
-                            gamesLabel.setText("Games: " + totalGames + " games");
-                        }
-                    });
-                    break;
-            }
-        });
-    }
+    //             case WINRATE_INFO:
+    //                 Platform.runLater(() -> {
+    //                     if (ratingLabel != null && gamesLabel != null) {
+    //                         String[] parts = data.message.split(",");
+    //                         String winRate = parts[0];
+    //                         String totalGames = parts[1];
+    //                         ratingLabel.setText("Rating: " + winRate + " %");
+    //                         gamesLabel.setText("Games: " + totalGames + " games");
+    //                     }
+    //                 });
+    //                 break;
+    //         }
+    //     });
+    // }
         
         // 밑에가 형이한거 (위에 replace한건 게임코드로 조인하는거 매니징하면서 바꿔본것)
-        /*clientConnection = new Client(data -> {
-            switch (data.type) {
-                case TEXT:
-                    Platform.runLater(() -> {
-                        if (data.message.startsWith("FRIENDLIST:")) {
-                            String[] parts = data.message.split(":");
-                            if (parts.length == 3) {
-                                String[] friends = parts[2].split(",");
-                                FriendList.getItems().setAll(friends);
+        private void setupConnection() {
+            clientConnection = new Client(data -> {
+                switch (data.type) {
+                    case TEXT:
+                        Platform.runLater(() -> {
+                            if (data.message.startsWith("FRIENDLIST:")) {
+                                String[] parts = data.message.split(":");
+                                if (parts.length == 3) {
+                                    String[] friends = parts[2].split(",");
+                                    FriendList.getItems().setAll(friends);
+                                }
+                                return;
                             }
-                            return;
-                        }
-                        
-
-                        if (data.message.equals("LOGIN_SUCCESS") || data.message.equals("SIGNUP_SUCCESS")) {
-                            // primaryStage.setScene(chatScene); // 테스트용용
-                            // primaryStage.setTitle("Client Chat");
-                            String username = usernameField.getText();
-                            this.lobbyScene = buildLobbyScene(username);
                             
-                            clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
-                            Platform.runLater(() -> {
-                                primaryStage.setScene(lobbyScene);
-                                primaryStage.setTitle("Game Lobby");
-                            });
 
-                        } else if (data.message.equals("LOGIN_FAIL") || data.message.equals("SIGNUP_FAIL")) {
-                            showErrorMessage("Login Failed");
-                            try {
-                                clientConnection.close();
-                            } catch (Exception e) {
-                                e.printStackTrace();
+                            if (data.message.equals("LOGIN_SUCCESS") || data.message.equals("SIGNUP_SUCCESS")) {
+                                // primaryStage.setScene(chatScene); // 테스트용용
+                                // primaryStage.setTitle("Client Chat");
+                                String username = usernameField.getText();
+                                this.lobbyScene = buildLobbyScene(username);
+                                
+                                clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
+                                Platform.runLater(() -> {
+                                    primaryStage.setScene(lobbyScene);
+                                    primaryStage.setTitle("Game Lobby");
+                                });
+
+                            } else if (data.message.equals("LOGIN_FAIL") || data.message.equals("SIGNUP_FAIL")) {
+                                showErrorMessage("Login Failed");
+                                try {
+                                    clientConnection.close();
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }else if(data.message.equals("ADDFRIEND_SUCCESS")){
+                                if (AFresultLabel != null)
+                                    AFresultLabel.setText("User is added");
+                                String username = usernameField.getText();
+                                clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
+                            }else if(data.message.equals("ADDFRIEND_FAIL")){
+                                // showPopup("User not found or already added.");
+                                if (AFresultLabel != null)
+                                    AFresultLabel.setText("User not found or already added.");
+
+                            }else {
+                                listItems.getItems().add(data.recipient + ": " + data.message);
                             }
-                        }else if(data.message.equals("ADDFRIEND_SUCCESS")){
-                            if (AFresultLabel != null)
-                                AFresultLabel.setText("User is added");
-                            String username = usernameField.getText();
-                            clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
-                        }else if(data.message.equals("ADDFRIEND_FAIL")){
-                            // showPopup("User not found or already added.");
-                            if (AFresultLabel != null)
-                                AFresultLabel.setText("User not found or already added.");
 
-                        }else {
-                            listItems.getItems().add(data.recipient + ": " + data.message);
-                        }
-                    });
-                    break;
-    
-                case NEWUSER:
-                    Platform.runLater(() -> {
-                        listUsers.getItems().add(data.recipient);
-                        listItems.getItems().add(data.recipient );
-                    });
-                    break;
-    
-                case DISCONNECT:
-                    Platform.runLater(() -> {
-                        listUsers.getItems().remove(data.recipient); // 로그아웃시 좌측화면에서 접속자 지움움
-                        listItems.getItems().add(data.recipient);
-                        
-                    });
-                    break;
-                case WINRATE_INFO:
-                    Platform.runLater(() -> {
-                        if(ratingLabel != null && gamesLabel != null){
-                            String[] parts = data.message.split(",");
-                        String winRate = parts[0];
-                        String totalGames = parts[1];
+                            if (data.message.startsWith("ROOM_CREATED:")) {
+                                String roomCode = data.message.split(":")[1];
+                                String username = usernameField.getText();
+                                primaryStage.setScene(buildGameScene("Room " + roomCode, username));
+                            } else if (data.message.startsWith("JOIN_SUCCESS:")) {
+                                String roomCode = data.message.split(":")[1];
+                                String username = usernameField.getText();
+                                primaryStage.setScene(buildGameScene("Room " + roomCode, username));
+                            } else if (data.message.equals("JOIN_FAIL")) {
+                                showErrorMessage("Join Failed: Invalid or full room.");
+                            } else if (data.message.startsWith("FRIENDLIST:")) {
+                                String[] parts = data.message.split(":");
+                                if (parts.length == 3) {
+                                    String[] friends = parts[2].split(",");
+                                    FriendList.getItems().setAll(friends);
+                                }
+                            } else if (data.message.equals("ADDFRIEND_SUCCESS")) {
+                                if (AFresultLabel != null)
+                                    AFresultLabel.setText("User is added");
+                                String username = usernameField.getText();
+                                clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
+                            } else if (data.message.equals("ADDFRIEND_FAIL")) {
+                                if (AFresultLabel != null)
+                                    AFresultLabel.setText("User not found or already added.");
+                            } else {
+                                listItems.getItems().add(data.recipient + ": " + data.message);
+                            }
 
-                        ratingLabel.setText("Rating: " + winRate + " %");
-                        gamesLabel.setText("Games: " + totalGames + " games");
-                        }
-                        // 받은 메시지 파싱
-                        
 
-                        // updateLobbyStats(winRate, totalGames);
-    
-                    });
-                    break;
-            }
-        });
+
+                        });
+                        break;
+        
+                    case NEWUSER:
+                        Platform.runLater(() -> {
+                            listUsers.getItems().add(data.recipient);
+                            listItems.getItems().add(data.recipient );
+                        });
+                        break;
+        
+                    case DISCONNECT:
+                        Platform.runLater(() -> {
+                            listUsers.getItems().remove(data.recipient); // 로그아웃시 좌측화면에서 접속자 지움움
+                            listItems.getItems().add(data.recipient);
+                            
+                        });
+                        break;
+                    case WINRATE_INFO:
+                        Platform.runLater(() -> {
+                            if(ratingLabel != null && gamesLabel != null){
+                                String[] parts = data.message.split(",");
+                            String winRate = parts[0];
+                            String totalGames = parts[1];
+
+                            ratingLabel.setText("Rating: " + winRate + " %");
+                            gamesLabel.setText("Games: " + totalGames + " games");
+                            }
+                            // 받은 메시지 파싱
+                            
+
+                            // updateLobbyStats(winRate, totalGames);
+        
+                        });
+                        break;
+                }
+            });
     
         clientConnection.start();
     
@@ -409,7 +441,7 @@ public class GuiClient extends Application {
                 e.printStackTrace();
             }
         }).start();
-    }*/
+    }
 
     
     

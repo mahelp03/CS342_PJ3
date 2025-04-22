@@ -3,6 +3,7 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -12,6 +13,9 @@ public class Server {
     ArrayList<ClientThread> clients = new ArrayList<>();
     TheServer server;
     private Consumer<Message> callback;
+
+    private final HashMap<String, GameRoom> gameRooms = new HashMap<>();
+
 
     Server(Consumer<Message> call) {
         callback = call;
@@ -47,6 +51,16 @@ public class Server {
             this.connection = s;
             this.count = count;
         }
+
+        private String generateRoomCode() {
+            String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 6; i++) {
+                sb.append(chars.charAt((int)(Math.random() * chars.length())));
+            }
+            return sb.toString();
+        }
+        
 
         public void updateClients(Message message) {
             switch (message.type) {
@@ -157,7 +171,55 @@ public class Server {
                         String friendStr = String.join(",", friends);
                         out.writeObject(new Message(user, "FRIENDLIST:" + user + ":" + friendStr));
                         continue;
+                    }else if (data.message.startsWith("CREATE_ROOM:")) {
+                        String creator = data.message.split(":")[1];
+                        String roomCode;
+                        do {
+                            roomCode = generateRoomCode(); // 중복 방지
+                        } while (gameRooms.containsKey(roomCode));
+                    
+                        GameRoom newRoom = new GameRoom(roomCode, creator);
+                        gameRooms.put(roomCode, newRoom);
+                    
+                        out.writeObject(new Message(creator, "ROOM_CREATED:" + roomCode));
+                        continue;
                     }
+                    
+                    else if (data.message.startsWith("JOIN_ROOM:")) {
+                        String[] parts = data.message.split(":");
+                        String username = parts[1];
+                        String roomCode = parts[2];
+                    
+                        GameRoom room = gameRooms.get(roomCode);
+                        if (room != null && !room.isFull()) {
+                            room.addPlayer(username);
+                            out.writeObject(new Message(username, "JOIN_SUCCESS:" + roomCode));
+                        } else {
+                            out.writeObject(new Message(username, "JOIN_FAIL"));
+                        }
+                        continue;
+                    }
+                    
+                    else if (data.message.startsWith("JOIN_RANDOM_REQUEST:")) {
+                        String username = data.message.split(":")[1];
+                        String joinedRoom = null;
+                    
+                        for (GameRoom room : gameRooms.values()) {
+                            if (!room.isFull()) {
+                                room.addPlayer(username);
+                                joinedRoom = room.getRoomCode();
+                                break;
+                            }
+                        }
+                    
+                        if (joinedRoom != null) {
+                            out.writeObject(new Message(username, "JOIN_SUCCESS:" + joinedRoom));
+                        } else {
+                            out.writeObject(new Message(username, "JOIN_FAIL"));
+                        }
+                        continue;
+                    }
+                    
 
 
 
