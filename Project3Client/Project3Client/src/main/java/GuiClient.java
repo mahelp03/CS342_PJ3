@@ -365,7 +365,8 @@ public class GuiClient extends Application {
                                 String roomCode = parts[2];
                                 String username = usernameField.getText();
                                 primaryStage.setScene(buildGameScene(roomName, username, roomCode)); //fixed
-                            } else if (data.message.startsWith("JOIN_SUCCESS:")) {
+                            }
+                            else if (data.message.startsWith("JOIN_SUCCESS:")) {
                                 //String roomCode = data.message.split(":")[1];
                                 //String username = usernameField.getText();
                                 //primaryStage.setScene(buildGameScene("Room " + roomCode, username));
@@ -376,7 +377,8 @@ public class GuiClient extends Application {
                                     String username = usernameField.getText();
                                     Platform.runLater(() -> primaryStage.setScene(buildGameScene(roomName, username, roomCode))); //fixed
                                 }
-                            } else if (data.message.equals("JOIN_FAIL")) {
+                            }
+                            else if (data.message.equals("JOIN_FAIL")) {
                                 showErrorMessage("Join Failed: Invalid or full room.");
                             } else if (data.message.startsWith("FRIENDLIST:")) {
                                 String[] parts = data.message.split(":");
@@ -489,16 +491,6 @@ public class GuiClient extends Application {
         return new Scene(layout, 400, 300);
     }
     
-    private String generateRoomCode() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        StringBuilder code = new StringBuilder();
-        for (int i = 0; i < 6; i++) {
-            int idx = (int)(Math.random() * chars.length());
-            code.append(chars.charAt(idx));
-        }
-        return code.toString();
-    }
-    
     private Scene buildGameScene(String roomName, String username, String roomCode) {
         //String roomCode = generateRoomCode(); // random 6-char room code
 
@@ -533,10 +525,29 @@ public class GuiClient extends Application {
                 primaryStage.setScene(freshJoinScene);
             });
         });
+        VBox gameArea = new VBox(10, header, gameBoard, backBtn);
+        gameArea.setPadding(new Insets(10));
+
+        // Player Info Area
+        Label p1Label = new Label("Player 1");
+        Label p1Stats = new Label("Rating: N/A\nGames: N/A");
+
+        Label p2Label = new Label("Player 2");
+        Label p2Stats = new Label("Rating: N/A\nGames: N/A");
+
+        VBox playerStats = new VBox(15, p1Label, p1Stats, p2Label, p2Stats);
+        playerStats.setPadding(new Insets(20));
+        playerStats.setStyle("-fx-background-color: #F0F8FF; -fx-border-color: black;");
+        playerStats.setPrefWidth(180);
+
+        HBox root = new HBox(30, gameArea, playerStats);
+        root.setPadding(new Insets(20));
+
+
 
         VBox layout = new VBox(15, header, gameBoard, backBtn);
         layout.setPadding(new Insets(20));
-        return new Scene(layout, 500, 450);
+        return new Scene(layout, 700, 450);
     }
 
     private Scene buildJoinRoomScene(String username) {

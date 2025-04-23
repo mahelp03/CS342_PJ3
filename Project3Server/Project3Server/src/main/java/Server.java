@@ -4,6 +4,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -171,37 +172,89 @@ public class Server {
                         String friendStr = String.join(",", friends);
                         out.writeObject(new Message(user, "FRIENDLIST:" + user + ":" + friendStr));
                         continue;
-                    }else if (data.message.startsWith("CREATE_ROOM:")) {
+                    }
+                    // else if (data.message.startsWith("CREATE_ROOM:")) {
+                    //     String[] parts = data.message.split(":");
+                    //     String creator = parts[1];
+                    //     String roomName = parts[2];
+                        
+                    //     String roomCode;
+                    //     do {
+                    //         roomCode = generateRoomCode(); // 중복 방지
+                    //     } while (gameRooms.containsKey(roomCode));
+                    
+                    //     GameRoom newRoom = new GameRoom(roomCode, roomName, creator);
+                    //     gameRooms.put(roomCode, newRoom);
+                    
+                    //     out.writeObject(new Message(creator, "ROOM_CREATED:" + roomName + ":" + roomCode));
+                    //     continue;
+                    // }
+                    else if (data.message.startsWith("CREATE_ROOM:")) {
                         String[] parts = data.message.split(":");
                         String creator = parts[1];
                         String roomName = parts[2];
-                        
+                    
                         String roomCode;
                         do {
                             roomCode = generateRoomCode(); // 중복 방지
                         } while (gameRooms.containsKey(roomCode));
                     
-                        GameRoom newRoom = new GameRoom(roomCode, roomName, creator);
+                        GameRoom newRoom = new GameRoom(roomCode,roomName, creator);
                         gameRooms.put(roomCode, newRoom);
                     
-                        out.writeObject(new Message(creator, "ROOM_CREATED:" + roomName + ":" + roomCode));
-                        continue;
-                    }
+                        double rate1 = AccountDatabase.getWinRate(creator);
+                        int games1 = AccountDatabase.getGameCount(creator);
                     
+                        String payload = "ROOM_CREATED:" + roomName + ":" + roomCode + ":" + creator + ":" + rate1 + "," + games1;
+                        out.writeObject(new Message(creator, payload));
+                        continue;
+                    }// 테스트용용
+                    
+                    
+                    // else if (data.message.startsWith("JOIN_ROOM:")) {
+                    //     String[] parts = data.message.split(":");
+                    //     String username = parts[1];
+                    //     String roomCode = parts[2];
+                    
+                    //     GameRoom room = gameRooms.get(roomCode);
+                    //     if (room != null && !room.isFull()) {
+                    //         room.addPlayer(username);
+                    //         out.writeObject(new Message(username, "JOIN_SUCCESS:" + room.getRoomName() + ":" + room.getRoomCode()));
+                    //     } else {
+                    //         out.writeObject(new Message(username, "JOIN_FAIL"));
+                    //     }
+                    //     continue;
+                    // }
                     else if (data.message.startsWith("JOIN_ROOM:")) {
                         String[] parts = data.message.split(":");
                         String username = parts[1];
                         String roomCode = parts[2];
-                    
+
                         GameRoom room = gameRooms.get(roomCode);
                         if (room != null && !room.isFull()) {
                             room.addPlayer(username);
-                            out.writeObject(new Message(username, "JOIN_SUCCESS:" + room.getRoomName() + ":" + room.getRoomCode()));
+
+                            List<String> players = room.getPlayers();
+                            String player1 = players.get(0);
+                            String player2 = username;
+
+                            double rate1 = AccountDatabase.getWinRate(player1);
+                            int games1 = AccountDatabase.getGameCount(player1);
+
+                            double rate2 = AccountDatabase.getWinRate(player2);
+                            int games2 = AccountDatabase.getGameCount(player2);
+
+                            String payload = "JOIN_SUCCESS:" + roomCode + ":" +
+                                            player1 + ":" + rate1 + "," + games1 + ":" +
+                                            player2 + ":" + rate2 + "," + games2;
+
+                            out.writeObject(new Message(username, payload));
                         } else {
                             out.writeObject(new Message(username, "JOIN_FAIL"));
                         }
                         continue;
                     }
+
                     
                     else if (data.message.startsWith("JOIN_RANDOM_REQUEST:")) {
                         String username = data.message.split(":")[1];
