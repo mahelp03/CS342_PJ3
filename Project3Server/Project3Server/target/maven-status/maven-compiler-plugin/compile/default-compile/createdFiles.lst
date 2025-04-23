@@ -3,6 +3,7 @@ RoomManager.class
 Server$1.class
 Message.class
 GuiServer$1.class
+PlayerInfo.class
 GameRoom.class
 MessageType.class
 Server$ClientThread.class

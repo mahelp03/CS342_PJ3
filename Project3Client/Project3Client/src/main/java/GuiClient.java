@@ -30,6 +30,9 @@ public class GuiClient extends Application {
     HBox fields;
     ComboBox<String> listUsers;
     ListView<String> listItems, FriendList;
+    private Message lastRoomMessage;
+    private String currentUsername;
+
     
 
     // each scenes
@@ -327,6 +330,7 @@ public class GuiClient extends Application {
                                 // primaryStage.setScene(chatScene); // 테스트용용
                                 // primaryStage.setTitle("Client Chat");
                                 String username = usernameField.getText();
+                                this.currentUsername = username;
                                 this.lobbyScene = buildLobbyScene(username);
                                 
                                 clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
@@ -360,6 +364,7 @@ public class GuiClient extends Application {
                                 //String roomCode = data.message.split(":")[1];
                                 //String username = usernameField.getText();
                                 //primaryStage.setScene(buildGameScene("Room " + roomCode, username));
+                                lastRoomMessage = data;
                                 String[] parts = data.message.split(":");
                                 String roomName = parts[1];
                                 String roomCode = parts[2];
@@ -370,11 +375,13 @@ public class GuiClient extends Application {
                                 //String roomCode = data.message.split(":")[1];
                                 //String username = usernameField.getText();
                                 //primaryStage.setScene(buildGameScene("Room " + roomCode, username));
+                                lastRoomMessage = data;
                                 String[] parts = data.message.split(":");
                                 if (parts.length >= 3) {
                                     String roomName = parts[1];
                                     String roomCode = parts[2];
                                     String username = usernameField.getText();
+                                    
                                     Platform.runLater(() -> primaryStage.setScene(buildGameScene(roomName, username, roomCode))); //fixed
                                 }
                             }
@@ -525,6 +532,7 @@ public class GuiClient extends Application {
                 primaryStage.setScene(freshJoinScene);
             });
         });
+
         VBox gameArea = new VBox(10, header, gameBoard, backBtn);
         gameArea.setPadding(new Insets(10));
 
@@ -535,6 +543,33 @@ public class GuiClient extends Application {
         Label p2Label = new Label("Player 2");
         Label p2Stats = new Label("Rating: N/A\nGames: N/A");
 
+        Message latestMsg = lastRoomMessage; // buildGameScene() 호출 직전에 저장해두는 구조
+        if (latestMsg != null && latestMsg.message.startsWith("ROOM_CREATED:")) {
+            String[] parts = latestMsg.message.split(":");
+            String creator = parts[3];
+            String[] stats = parts[4].split(",");
+            p1Label.setText(creator);
+            p1Stats.setText("Rating: " + stats[0] + " %\nGames: " + stats[1]);
+        } else if (latestMsg != null && latestMsg.message.startsWith("JOIN_SUCCESS:")) {
+            String[] parts = latestMsg.message.split(":");
+            if (parts.length >= 8) {
+                // p1Label.setText(parts[3]);
+                // p1Stats.setText("Rating: " + parts[4].split(",")[0] + " %\nGames: " + parts[4].split(",")[1]);
+
+                // p2Label.setText(parts[5]);
+                // p2Stats.setText("Rating: " + parts[6].split(",")[0] + " %\nGames: " + parts[6].split(",")[1]);
+                String player1 = parts[3];
+                String[] stats1 = parts[4].split(",");
+                String player2 = parts[5];
+                String[] stats2 = parts[6].split(",");
+
+                p1Label.setText(player1);
+                p1Stats.setText("Rating: " + stats1[0] + " %\nGames: " + stats1[1]);
+                p2Label.setText(player2);
+                p2Stats.setText("Rating: " + stats2[0] + " %\nGames: " + stats2[1]);
+            }
+        }
+
         VBox playerStats = new VBox(15, p1Label, p1Stats, p2Label, p2Stats);
         playerStats.setPadding(new Insets(20));
         playerStats.setStyle("-fx-background-color: #F0F8FF; -fx-border-color: black;");
@@ -543,12 +578,11 @@ public class GuiClient extends Application {
         HBox root = new HBox(30, gameArea, playerStats);
         root.setPadding(new Insets(20));
 
-
-
-        VBox layout = new VBox(15, header, gameBoard, backBtn);
-        layout.setPadding(new Insets(20));
-        return new Scene(layout, 700, 450);
+        return new Scene(root, 700, 450);
     }
+
+
+
 
     private Scene buildJoinRoomScene(String username) {
         VBox layout = new VBox(15);
@@ -572,24 +606,6 @@ public class GuiClient extends Application {
             clientConnection.send(new Message("SERVER", "JOIN_RANDOM_REQUEST:" + username));
         });
         Button backBtn = new Button("Back");
-    
-        /*enterBtn.setOnAction(e -> {
-            String code = roomCodeField.getText().trim().toUpperCase();
-            if (!code.isEmpty()) {
-                System.out.println(username + " is joining room with code: " + code);
-                primaryStage.setScene(buildGameScene("Room " + code, username)); // placeholder logic
-            }
-        });
-    
-        randomBtn.setOnAction(e -> {
-            String randomCode = findAvailableRoom();
-            if (randomCode != null) {
-                System.out.println(username + " randomly joining room: " + randomCode);
-                primaryStage.setScene(buildGameScene("Room " + randomCode, username));
-            } else {
-                showErrorMessage("No rooms available for random join.");
-            }
-        });*/
 
         enterBtn.setOnAction(e -> {
             String code = roomCodeField.getText().trim().toUpperCase();
@@ -611,11 +627,6 @@ public class GuiClient extends Application {
         layout.getChildren().addAll(label, roomCodeField, buttons);
     
         return new Scene(layout, 400, 300);
-    }
-    
-    private String findAvailableRoom() {
-        // Simulate with hardcoded return for now
-        return "R5S89X"; // Only return if a valid room with 1 player exists
     }
     
 }

@@ -208,23 +208,57 @@ public class Server {
                         String payload = "ROOM_CREATED:" + roomName + ":" + roomCode + ":" + creator + ":" + rate1 + "," + games1;
                         out.writeObject(new Message(creator, payload));
                         continue;
-                    }// 테스트용용
-                    
-                    
+                    }
                     // else if (data.message.startsWith("JOIN_ROOM:")) {
                     //     String[] parts = data.message.split(":");
                     //     String username = parts[1];
                     //     String roomCode = parts[2];
-                    
+
                     //     GameRoom room = gameRooms.get(roomCode);
                     //     if (room != null && !room.isFull()) {
                     //         room.addPlayer(username);
-                    //         out.writeObject(new Message(username, "JOIN_SUCCESS:" + room.getRoomName() + ":" + room.getRoomCode()));
+
+                    //         List<String> players = room.getPlayers();
+                    //         String player1 = players.get(0);
+                    //         String player2 = username;
+
+                    //         double rate1 = AccountDatabase.getWinRate(player1);
+                    //         int games1 = AccountDatabase.getGameCount(player1);
+
+                    //         String payload = null;
+
+                    //         // double rate2 = AccountDatabase.getWinRate(player2);
+                    //         // int games2 = AccountDatabase.getGameCount(player2);
+
+                    //         // String payload = "JOIN_SUCCESS:" + roomCode + ":" +
+                    //         //                 player1 + ":" + rate1 + "," + games1 + ":" +
+                    //         //                 player2 + ":" + rate2 + "," + games2;
+                    //         if (player2 != null){
+                    //             double rate2 = AccountDatabase.getWinRate(player2);
+                    //             int games2 = AccountDatabase.getGameCount(player2);
+
+                    //             payload = "JOIN_SUCCESS:" + room.getRoomName() + ":" + roomCode + ":" + player1 + ":" + rate1 + "," + games1 + ":" + player2 + ":" + rate2 + "," + games2;
+
+
+                    //             //out.writeObject(new Message(username, payload));
+                    //             for (ClientThread t : clients) {
+                    //                 if (t.username != null && (t.username.equals(player1) || t.username.equals(player2))) {
+                    //                     t.out.writeObject(new Message(t.username, payload));
+                    //                 }
+                    //             }
+                    //         }else{
+                    //             payload = "ROOM_CREATED:" + room.getRoomName() + ":" + roomCode + ":" + player1 + ":" + rate1 + "," + games1;
+                    //             out.writeObject(new Message(username, payload));
+                    //         }
+
+                            
+                            
                     //     } else {
                     //         out.writeObject(new Message(username, "JOIN_FAIL"));
                     //     }
                     //     continue;
                     // }
+                    // ✅ PATCH: Server.java > JOIN_ROOM 처리 부분만 수정
                     else if (data.message.startsWith("JOIN_ROOM:")) {
                         String[] parts = data.message.split(":");
                         String username = parts[1];
@@ -235,25 +269,39 @@ public class Server {
                             room.addPlayer(username);
 
                             List<String> players = room.getPlayers();
-                            String player1 = players.get(0);
-                            String player2 = username;
+                            if (players.size() == 2) {
+                                String player1 = players.get(0);
+                                String player2 = players.get(1);
 
-                            double rate1 = AccountDatabase.getWinRate(player1);
-                            int games1 = AccountDatabase.getGameCount(player1);
+                                double rate1 = AccountDatabase.getWinRate(player1);
+                                int games1 = AccountDatabase.getGameCount(player1);
 
-                            double rate2 = AccountDatabase.getWinRate(player2);
-                            int games2 = AccountDatabase.getGameCount(player2);
+                                double rate2 = AccountDatabase.getWinRate(player2);
+                                int games2 = AccountDatabase.getGameCount(player2);
 
-                            String payload = "JOIN_SUCCESS:" + roomCode + ":" +
-                                            player1 + ":" + rate1 + "," + games1 + ":" +
-                                            player2 + ":" + rate2 + "," + games2;
+                                String payload = "JOIN_SUCCESS:" + room.getRoomName() + ":" + roomCode + ":" +
+                                    player1 + ":" + rate1 + "," + games1 + ":" +
+                                    player2 + ":" + rate2 + "," + games2;
 
-                            out.writeObject(new Message(username, payload));
+                                for (ClientThread t : clients) {
+                                    if (t.username != null && (t.username.equals(player1) || t.username.equals(player2))) {
+                                        t.out.writeObject(new Message(t.username, payload));
+                                    }
+                                }
+                            } else if (players.size() == 1) {
+                                String player1 = players.get(0);
+                                double rate1 = AccountDatabase.getWinRate(player1);
+                                int games1 = AccountDatabase.getGameCount(player1);
+
+                                String payload = "ROOM_CREATED:" + room.getRoomName() + ":" + roomCode + ":" + player1 + ":" + rate1 + "," + games1;
+                                out.writeObject(new Message(username, payload));
+                            }
                         } else {
                             out.writeObject(new Message(username, "JOIN_FAIL"));
                         }
                         continue;
                     }
+
 
                     
                     else if (data.message.startsWith("JOIN_RANDOM_REQUEST:")) {
