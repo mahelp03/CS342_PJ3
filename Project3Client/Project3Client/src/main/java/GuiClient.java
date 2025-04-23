@@ -498,42 +498,77 @@ public class GuiClient extends Application {
         return new Scene(layout, 400, 300);
     }
     
+    // 커넥트4 ui빌드
     private Scene buildGameScene(String roomName, String username, String roomCode) {
-        //String roomCode = generateRoomCode(); // random 6-char room code
-
         Label header = new Label("Room: " + roomName + " | Code: " + roomCode);
         header.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+
+        final int rows = 6;
+        final int cols = 7;
+        int[][] board = new int[rows][cols]; // 0=empty, 1=red, 2=yellow
+        boolean[] playerTurn = {true}; // Player 1: true, Player 2: false
+        Button[][] buttons = new Button[rows][cols];
+        boolean[] gameOver = {false};
+        Label turnLabel = new Label("Turn: Player 1 (Red)");
 
         GridPane gameBoard = new GridPane();
         gameBoard.setPadding(new Insets(10));
         gameBoard.setHgap(5);
         gameBoard.setVgap(5);
 
-        int rows = 6;
-        int cols = 7;
+        // initialize buttons and board (여기서부턴 안바꿈)
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
-                Button cell = new Button("");
-                cell.setPrefSize(50, 50);
+                Button cell = new Button();
+                cell.setMinSize(50, 50);
+                cell.setMaxSize(50, 50);
+                cell.setStyle("-fx-background-color: #e0e0e0;");
+
                 int finalCol = col;
                 cell.setOnAction(e -> {
-                    System.out.println(username + " clicked column " + finalCol);
-            });
-            gameBoard.add(cell, col, row);
+                    if (gameOver[0]) return;
+                    int dropRow = -1;
+                    for (int r = rows-1; r >= 0; r--) {
+                        if (board[r][finalCol] == 0) {
+                            dropRow = r;
+                            break;
+                        }
+                    }
+                    if (dropRow == -1) return; // Column full
+
+                    int currentPlayer = playerTurn[0] ? 1 : 2;
+                    board[dropRow][finalCol] = currentPlayer;
+                    updateButton(buttons, dropRow, finalCol, currentPlayer);
+                    buttons[dropRow][finalCol].setDisable(true);
+
+                    if (checkWin(board, dropRow, finalCol, currentPlayer)) {
+                        gameOver[0] = true;
+                        turnLabel.setText("Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)") + " wins!");
+                        showWinDialog("Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)") + " wins!");
+                        return;
+                    } else if (isDraw(board)) {
+                        gameOver[0] = true;
+                        turnLabel.setText("Draw!");
+                        showWinDialog("It's a draw!");
+                        return;
+                    }
+
+                    // Switch turn
+                    playerTurn[0] = !playerTurn[0];
+                    turnLabel.setText("Turn: Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)"));
+                });
+                gameBoard.add(cell, col, row);
+                buttons[row][col] = cell;
             }
         }
 
         Button backBtn = new Button("Exit Room");
         backBtn.setOnAction(e -> {
             clientConnection.send(new Message("SERVER", "LEAVE_ROOM:" + username));
-    
-            Platform.runLater(() -> {
-                Scene freshJoinScene = buildJoinRoomScene(username);
-                primaryStage.setScene(freshJoinScene);
-            });
+            Platform.runLater(() -> primaryStage.setScene(lobbyScene));
         });
 
-        VBox gameArea = new VBox(10, header, gameBoard, backBtn);
+        VBox gameArea = new VBox(10, header, turnLabel, gameBoard, backBtn);
         gameArea.setPadding(new Insets(10));
 
         // Player Info Area
@@ -629,4 +664,50 @@ public class GuiClient extends Application {
         return new Scene(layout, 400, 300);
     }
     
+    // 밑에부터 4목 게임 요소들
+    // Helper: Set color on button
+    private void updateButton(Button[][] buttons, int row, int col, int player) {
+        buttons[row][col].setGraphic(new javafx.scene.shape.Circle(18, player == 1 ? javafx.scene.paint.Color.RED : javafx.scene.paint.Color.GOLD));
+        buttons[row][col].setStyle("-fx-background-color: white;");
+        buttons[row][col].setDisable(true);
+    }
+
+    // Win checking
+    private boolean checkWin(int[][] board, int row, int col, int player) {
+        int[][] dirs = {{1,0},{0,1},{1,1},{1,-1}};
+        for (int[] d : dirs) {
+            int count = 1;
+            count += countDir(board, row, col, d[0], d[1], player);
+            count += countDir(board, row, col, -d[0], -d[1], player);
+            if (count >= 4) return true;
+        }
+        return false;
+    }
+
+    private int countDir(int[][] board, int row, int col, int dr, int dc, int player) {
+        int count = 0, r = row+dr, c = col+dc;
+        while (r >= 0 && r < board.length && c >= 0 && c < board[0].length && board[r][c] == player) {
+            count++; r += dr; c += dc;
+        }
+        return count;
+    }
+
+    private boolean isDraw(int[][] board) {
+        for (int col = 0; col < board[0].length; col++) {
+            if (board[0][col] == 0) return false;
+        }
+        return true;
+    }
+
+    private void showWinDialog(String msg) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setHeaderText(null);
+            alert.setContentText(msg);
+            alert.setTitle("Game Over");
+            alert.showAndWait();
+        });
+    }
+
+
 }
