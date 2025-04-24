@@ -55,6 +55,7 @@ public class GuiClient extends Application {
     Button startbt = new Button("Start");
     Button resetbt = new Button("Reset");
     private boolean[] gameStarted = {false};
+    private ListView<String> historyList;
 
 
 
@@ -176,6 +177,9 @@ public class GuiClient extends Application {
 
         clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + username));
 
+        historyList = new ListView<>();
+        historyList.getItems().add("Recent Game History");
+
         VBox profileBox = new VBox(5, userLabel, ratingLabel, gamesLabel);
         profileBox.setStyle("-fx-border-color: blue; -fx-padding: 10");
 
@@ -194,8 +198,9 @@ public class GuiClient extends Application {
         });
         
 
-        ListView<String> historyList = new ListView<>();
-        historyList.getItems().add("History (Recent 3-5 games)");
+        // ListView<String> historyList = new ListView<>();
+        historyList = new ListView<>();
+        historyList.getItems().add("Recent Game History");
 
         leftPane.getChildren().addAll(profileBox, createRoom, joinRoom, historyList);
 
@@ -293,6 +298,7 @@ public class GuiClient extends Application {
                                 this.lobbyScene = buildLobbyScene(username);
                                 
                                 clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
+                                clientConnection.send(new Message("SERVER", "GET_HISTORY:" + username));
                                 Platform.runLater(() -> {
                                     primaryStage.setScene(lobbyScene);
                                     primaryStage.setTitle("Game Lobby");
@@ -378,6 +384,14 @@ public class GuiClient extends Application {
                                     resetbt.setDisable(false);
                                 });
                                 return;
+                            }
+                            else if (data.message.startsWith("HISTORY_ENTRY:")) {
+                                String entry = data.message.substring("HISTORY_ENTRY:".length());
+                                Platform.runLater(() -> {
+                                    if (!historyList.getItems().contains(entry)) {  // ✅ 중복 체크
+                                        historyList.getItems().add(entry);
+                                    }
+                                });
                             }
                             
 
@@ -651,9 +665,20 @@ public class GuiClient extends Application {
 
         Button backBtn = new Button("Exit Room");
         backBtn.setOnAction(e -> {
+            // 서버에 퇴장 요청
             clientConnection.send(new Message("SERVER", "LEAVE_ROOM:" + username));
-            Platform.runLater(() -> primaryStage.setScene(lobbyScene));
+            
+            // 히스토리 초기화 후 갱신 요청
+            clientConnection.send(new Message("SERVER", "GET_HISTORY:" + currentUsername));
+
+
+            // 로비 화면으로 전환 (최우선으로 실행)
+            Platform.runLater(() -> {
+                primaryStage.setScene(lobbyScene);
+                primaryStage.setTitle("Game Lobby");
+            });
         });
+
 
         VBox gameArea = new VBox(10, header, turnLabel, gameBoard, backBtn);
         gameArea.setPadding(new Insets(10));
@@ -911,17 +936,28 @@ public class GuiClient extends Application {
             turnLabel.setText("Player " + currentPlayer + " wins!");
             showWinDialog("Player " + currentPlayer + " wins!");
             System.out.println("[DEBUG] Game Over - Winner: " + (currentPlayer == 1 ? player1Name : player2Name));
-
+            
             String winner = (currentPlayer == 1) ? player1Name : player2Name;
             String loser  = (currentPlayer == 1) ? player2Name : player1Name;
             clientConnection.send(new Message("SERVER", "GAME_RESULT:" + winner + ":" + loser));
 
-            clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + currentUsername));
+            // clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + currentUsername));
+            // clientConnection.send(new Message("SERVER", "GET_HISTORY:" + currentUsername));
+            clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player1Name));
+            clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player2Name));
+            clientConnection.send(new Message("SERVER", "GET_HISTORY:" + player1Name));
+            clientConnection.send(new Message("SERVER", "GET_HISTORY:" + player2Name));
             return;
         } else if (isDraw(board)) {
             gameOver[0] = true;
             turnLabel.setText("Draw!");
             showWinDialog("It's a draw!");
+
+            clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player1Name));
+            clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player2Name));
+            clientConnection.send(new Message("SERVER", "GET_HISTORY:" + player1Name));
+            clientConnection.send(new Message("SERVER", "GET_HISTORY:" + player2Name));
+
         } else {
             playerTurn[0] = !playerTurn[0];
             turnLabel.setText("Turn: Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)"));

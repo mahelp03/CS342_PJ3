@@ -5,6 +5,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -444,7 +445,35 @@ public class Server {
                                 t.out.writeObject(m2);
                             }
                         }
+
+                        // ✅ 히스토리 기록 및 전송
+                        String roomCode = "";
+                        for (Map.Entry<String, GameRoom> entry : gameRooms.entrySet()) {
+                            if (entry.getValue().hasPlayer(winner) && entry.getValue().hasPlayer(loser)) {
+                                roomCode = entry.getKey();
+                                break;
+                            }
+                        }
+                        AccountDatabase.addGameResult(roomCode, winner, loser, winner);
+
+                        for (ClientThread t : clients) {
+                            if (t.username != null && t.username.equals(winner)) {
+                                t.out.writeObject(m1);
+                            }
+                            if (t.username != null && t.username.equals(loser)) {
+                                t.out.writeObject(m2);
+                            }
+                        }
                         System.out.println("[STATS] Updated results - Winner: " + winner + ", Loser: " + loser);
+                        continue;
+                    }
+                    else if (data.message.startsWith("GET_HISTORY:")) {
+                        String username = data.message.split(":")[1];
+                        List<String> history = AccountDatabase.getGameHistory(username);
+                    
+                        for (String entry : history) {
+                            out.writeObject(new Message(username, "HISTORY_ENTRY:" + entry));
+                        }
                         continue;
                     }
                     
