@@ -1,11 +1,14 @@
 GuiServer.class
+RoomManager.class
+Server$1.class
+Message.class
+GuiServer$1.class
+PlayerInfo.class
+GameRoom.class
 MessageType.class
 Server$ClientThread.class
 FriendHander.class
-Server$1.class
 Server.class
 LoginHandler.class
-Message.class
 AccountDatabase.class
-GuiServer$1.class
 Server$TheServer.class
