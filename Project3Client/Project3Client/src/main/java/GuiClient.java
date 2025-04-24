@@ -389,6 +389,9 @@ public class GuiClient extends Application {
                                 String entry = data.message.substring("HISTORY_ENTRY:".length());
                                 Platform.runLater(() -> {
                                     if (!historyList.getItems().contains(entry)) {  // ✅ 중복 체크
+                                        if (historyList.getItems().size() >= 6) {
+                                            historyList.getItems().remove(1); // 0번째는 헤더("Recent Game History")니까 1번 인덱스 삭제
+                                        }
                                         historyList.getItems().add(entry);
                                     }
                                 });
