@@ -398,6 +398,23 @@ public class Server {
                     
                         continue;
                     }
+                    else if (data.message.startsWith("MOVE:")) {
+                        String[] parts = data.message.split(":");
+                        String roomCode = parts[1];
+                        String username = parts[2];
+                        int col = Integer.parseInt(parts[3]);
+                    
+                        GameRoom room = gameRooms.get(roomCode);
+                        if (room != null) {
+                            for (ClientThread t : clients) {
+                                if (room.hasPlayer(t.username)) {
+                                    t.out.writeObject(new Message("SERVER", "UPDATE_MOVE:" + username + ":" + col));
+                                }
+                            }
+                        }
+                        continue;
+                    }
+                    
                     
 
                     else if (data.message.startsWith("LEAVE_ROOM:")) {

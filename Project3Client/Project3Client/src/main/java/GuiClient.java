@@ -52,6 +52,9 @@ public class GuiClient extends Application {
     private boolean[] playerTurn;
     private boolean[] gameOver;
     private Label turnLabel;
+    Button startbt = new Button("Start");
+    Button resetbt = new Button("Reset");
+    private boolean[] gameStarted = {false};
 
 
 
@@ -366,7 +369,14 @@ public class GuiClient extends Application {
                                 Platform.runLater(() -> applyMoveToBoard(mover, col));
                             }
                             
-                            
+                            if (data.message.startsWith("START_GAME:")) {
+                                Platform.runLater(() -> {
+                                    gameStarted[0] = true;
+                                    startbt.setDisable(true);
+                                    resetbt.setDisable(false);
+                                });
+                                return;
+                            }
                             
 
                             else if (data.message.startsWith("PROFILE_INFO:")) {
@@ -573,6 +583,8 @@ public class GuiClient extends Application {
         playerTurn = new boolean[] {true};
         gameOver = new boolean[] {false};
         turnLabel = new Label("Turn: Player 1 (Red)");
+        boolean[] gameStarted = {false};
+
 
         
         // Label turnLabel = new Label("Turn: Player 1 (Red)"); // 현재 턴 표시용
@@ -589,7 +601,7 @@ public class GuiClient extends Application {
 
                 int finalCol = col;
                 cell.setOnAction(e -> {
-                    if (gameOver[0]) return;
+                    if (gameOver[0] || !gameStarted[0]) return;
                     boolean isMyTurn = (playerTurn[0] && username.equals(player1Name)) || (!playerTurn[0] && username.equals(player2Name));
                     if (!isMyTurn) {
                         System.out.println("[DEBUG] It's not your turn: " + username);
@@ -707,10 +719,69 @@ public class GuiClient extends Application {
         if (!pendingPlayerList.isEmpty()) {
             playerListView.setItems(javafx.collections.FXCollections.observableArrayList(pendingPlayerList));
         }
-        Button startbt = new Button("Start");
-        Button resetbt = new Button("Reset");
+        // Button startbt = new Button("Start");
+        // Button resetbt = new Button("Reset");
 
-        VBox playerStats = new VBox(15, p1Label, p1Stats, p2Label, p2Stats, playerListView);
+        if(pendingPlayerList.size()==2){
+            startbt.setDisable(false);
+        }
+
+        // boolean[] gameStarted = {false}; // is the game started? it mightbe not
+
+        startbt.setOnAction(e -> {
+            // gameStarted[0] = true;
+            // startbt.setDisable(true); // disable startbt while playing game
+            // resetbt.setDisable(false); // reset bt activated
+            // turnLabel.setText("Turn: Player 1 (Red)");
+
+            if (playerListView.getItems().size() == 2) {  // 플레이어 2명일 때만
+                clientConnection.send(new Message("SERVER", "START_GAME:" + roomCode));
+                gameStarted[0] = true;
+                startbt.setDisable(true);
+                resetbt.setDisable(false);
+            }
+        
+            for (int row = 0; row < rows; row++) {
+                for (int col = 0; col < cols; col++) {
+                    int finalCol = col;
+                    buttons[row][col].setOnAction(ev -> {
+                        if (!gameStarted[0] || gameOver[0]) return;
+        
+                        if ((playerTurn[0] && username.equals(player1Name)) ||
+                            (!playerTurn[0] && username.equals(player2Name))) {
+                            clientConnection.send(new Message("SERVER", "MOVE:" + roomCode + ":" + username + ":" + finalCol));
+                        }
+                    });
+                }
+            }
+        });
+
+
+        resetbt.setOnAction(e -> {
+            gameStarted[0] = false;
+            gameOver[0] = false;
+            resetbt.setDisable(true);
+            turnLabel.setText("Game reset. Press Start to begin.");
+        
+            for (int row = 0; row < rows; row++) {
+                for (int col = 0; col < cols; col++) {
+                    board[row][col] = 0;
+                    buttons[row][col].setGraphic(null);
+                    buttons[row][col].setStyle("-fx-background-color: #e0e0e0;");
+                    buttons[row][col].setDisable(true);
+                }
+            }
+        
+            playerTurn[0] = true;
+        });
+
+        HBox hbox333 = new HBox(20, startbt, resetbt);
+        hbox333.setPadding(new Insets(0,0,0,20));
+
+        Label textN = new Label("Click Start, if u ready!!");
+        textN.setPadding(new Insets(0,0,0,5));
+
+        VBox playerStats = new VBox(15, p1Label, p1Stats, p2Label, p2Stats, playerListView, hbox333, textN);
         playerStats.setPadding(new Insets(20));
         playerStats.setStyle("-fx-background-color: #F0F8FF; -fx-border-color: black;");
         playerStats.setPrefWidth(180);
@@ -718,7 +789,7 @@ public class GuiClient extends Application {
         HBox root = new HBox(30, gameArea, playerStats);
         root.setPadding(new Insets(20));
 
-        return new Scene(root, 700, 600);
+        return new Scene(root, 700, 550);
     }
 
 
