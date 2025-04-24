@@ -45,6 +45,15 @@ public class GuiClient extends Application {
     private String player2Name;
 
 
+    private int rows = 6;
+    private int cols = 7;
+    private int[][] board;
+    private Button[][] buttons;
+    private boolean[] playerTurn;
+    private boolean[] gameOver;
+    private Label turnLabel;
+
+
 
     
 
@@ -269,7 +278,7 @@ public class GuiClient extends Application {
                                 }
                                 return;
                             }
-                            
+
 
                             if (data.message.equals("LOGIN_SUCCESS") || data.message.equals("SIGNUP_SUCCESS")) {
                                 // primaryStage.setScene(chatScene); // 테스트용용
@@ -297,7 +306,6 @@ public class GuiClient extends Application {
                                 String username = usernameField.getText();
                                 clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
                             }else if(data.message.equals("ADDFRIEND_FAIL")){
-                                // showPopup("User not found or already added.");
                                 if (AFresultLabel != null)
                                     AFresultLabel.setText("User not found or already added.");
 
@@ -306,9 +314,7 @@ public class GuiClient extends Application {
                             }
 
                             if (data.message.startsWith("ROOM_CREATED:")) {
-                                //String roomCode = data.message.split(":")[1];
-                                //String username = usernameField.getText();
-                                //primaryStage.setScene(buildGameScene("Room " + roomCode, username));
+                                
                                 lastRoomMessage = data;
                                 String[] parts = data.message.split(":");
                                 String roomName = parts[1];
@@ -316,28 +322,6 @@ public class GuiClient extends Application {
                                 String username = usernameField.getText();
                                 primaryStage.setScene(buildGameScene(roomName, username, roomCode)); //fixed
                             }
-                            // else if (data.message.startsWith("JOIN_SUCCESS:")) {
-                            //     //String roomCode = data.message.split(":")[1];
-                            //     //String username = usernameField.getText();
-                            //     //primaryStage.setScene(buildGameScene("Room " + roomCode, username));
-                            //     System.out.println("[DEBUG] Received JOIN_SUCCESS: " + data.message);
-                            //     lastRoomMessage = data;
-                            //     String[] parts = data.message.split(":");
-                            //     if (parts.length >= 3) {
-                            //         String roomName = parts[1];
-                            //         String roomCode = parts[2];
-                            //         String player1 = parts[3];
-                            //         String player2 = parts[5];
-
-                            //         String username = usernameField.getText();
-                                    
-                            //         Platform.runLater(() -> primaryStage.setScene(buildGameScene(roomName, username, roomCode))); //fixed
-                            //         clientConnection.send(new Message("SERVER", "GET_PLAYERLIST:" + roomCode));
-                            //         clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player1));
-                            //         clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player2));
-                            //     }
-                                
-                            // }
                             else if (data.message.startsWith("JOIN_SUCCESS:")) {
                                 System.out.println("[DEBUG] Received JOIN_SUCCESS: " + data.message);
                                 lastRoomMessage = data;
@@ -367,7 +351,21 @@ public class GuiClient extends Application {
                                     clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player1));
                                     clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player2));
                                 }
+                            }else if (data.message.startsWith("UPDATE_MOVE:")) {
+                                String[] parts = data.message.split(":");
+                                String mover = parts[1];
+                                int col = Integer.parseInt(parts[2]);
+                            
+                                Platform.runLater(() -> applyMoveToBoard(mover, col));
                             }
+                            else if (data.message.startsWith("MOVE:")) {
+                                String[] parts = data.message.split(":");
+                                String mover = parts[1];
+                                int col = Integer.parseInt(parts[2]);
+                            
+                                Platform.runLater(() -> applyMoveToBoard(mover, col));
+                            }
+                            
                             
                             
 
@@ -409,13 +407,13 @@ public class GuiClient extends Application {
                                 // });
                                 Platform.runLater(() -> {
                                     if (targetUser.trim().equals(player1Name)) {
-                                        System.out.println("[DEBUG] → Updating p1Stats");
+                                        System.out.println("[DEBUG] Updating p1Stats");
                                         p1Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
                                     } else if (targetUser.trim().equals(player2Name)) {
-                                        System.out.println("[DEBUG] → Updating p2Stats");
+                                        System.out.println("[DEBUG] Updating p2Stats");
                                         p2Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
                                     } else {
-                                        System.out.println("[DEBUG] ❌ targetUser didn't match either player name");
+                                        System.out.println("[DEBUG] targetUser didn't match either player name");
                                     }
                                 });
                             }
@@ -557,18 +555,29 @@ public class GuiClient extends Application {
         Label header = new Label("Room: " + roomName + " | Code: " + roomCode);
         header.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
 
-        final int rows = 6;
-        final int cols = 7;
-        int[][] board = new int[rows][cols]; // 0=empty, 1=red, 2=yellow
-        boolean[] playerTurn = {true}; // Player 1: true, Player 2: false
-        Button[][] buttons = new Button[rows][cols];
-        boolean[] gameOver = {false};
-        Label turnLabel = new Label("Turn: Player 1 (Red)");
+        // final int rows = 6;
+        // final int cols = 7;
+        // int[][] board = new int[rows][cols]; // 0=empty, 1=red, 2=yellow
+        // boolean[] playerTurn = {true}; // Player 1: true, Player 2: false
+        // Button[][] buttons = new Button[rows][cols];
+        // boolean[] gameOver = {false};
+        // Label turnLabel = new Label("Turn: Player 1 (Red)");
 
         GridPane gameBoard = new GridPane();
         gameBoard.setPadding(new Insets(10));
         gameBoard.setHgap(5);
         gameBoard.setVgap(5);
+
+        board = new int[rows][cols];
+        buttons = new Button[rows][cols];
+        playerTurn = new boolean[] {true};
+        gameOver = new boolean[] {false};
+        turnLabel = new Label("Turn: Player 1 (Red)");
+
+        
+        // Label turnLabel = new Label("Turn: Player 1 (Red)"); // 현재 턴 표시용
+        
+        
 
         // initialize buttons and board (여기서부턴 안바꿈)
         for (int row = 0; row < rows; row++) {
@@ -581,38 +590,58 @@ public class GuiClient extends Application {
                 int finalCol = col;
                 cell.setOnAction(e -> {
                     if (gameOver[0]) return;
+                    boolean isMyTurn = (playerTurn[0] && username.equals(player1Name)) || (!playerTurn[0] && username.equals(player2Name));
+                    if (!isMyTurn) {
+                        System.out.println("[DEBUG] It's not your turn: " + username);
+                        return;
+                    }
+
                     int dropRow = -1;
-                    System.out.println(username + " clicked column " + finalCol);
-                    for (int r = rows-1; r >= 0; r--) {
+                    for (int r = rows - 1; r >= 0; r--) {
                         if (board[r][finalCol] == 0) {
                             dropRow = r;
-                            
                             break;
                         }
+                    }
+                    if (dropRow == -1) return;
+
+
+
+                    
+                    clientConnection.send(new Message("SERVER", "MOVE:" + roomCode + ":" + username + ":" + finalCol));
+                    // if (gameOver[0]) return;
+                    // int dropRow = -1;
+                    // System.out.println(username + " clicked column " + finalCol);
+                    // for (int r = rows-1; r >= 0; r--) {
+                    //     if (board[r][finalCol] == 0) {
+                    //         dropRow = r;
+                            
+                    //         break;
+                    //     }
                         
-                    }
-                    if (dropRow == -1) return; // Column full
+                    // }
+                    // if (dropRow == -1) return; // Column full
 
-                    int currentPlayer = playerTurn[0] ? 1 : 2;
-                    board[dropRow][finalCol] = currentPlayer;
-                    updateButton(buttons, dropRow, finalCol, currentPlayer);
-                    buttons[dropRow][finalCol].setDisable(true);
+                    // int currentPlayer = playerTurn[0] ? 1 : 2;
+                    // board[dropRow][finalCol] = currentPlayer;
+                    // updateButton(buttons, dropRow, finalCol, currentPlayer);
+                    // buttons[dropRow][finalCol].setDisable(true);
 
-                    if (checkWin(board, dropRow, finalCol, currentPlayer)) {
-                        gameOver[0] = true;
-                        turnLabel.setText("Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)") + " wins!");
-                        showWinDialog("Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)") + " wins!");
-                        return;
-                    } else if (isDraw(board)) {
-                        gameOver[0] = true;
-                        turnLabel.setText("Draw!");
-                        showWinDialog("It's a draw!");
-                        return;
-                    }
+                    // if (checkWin(board, dropRow, finalCol, currentPlayer)) {
+                    //     gameOver[0] = true;
+                    //     turnLabel.setText("Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)") + " wins!");
+                    //     showWinDialog("Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)") + " wins!");
+                    //     return;
+                    // } else if (isDraw(board)) {
+                    //     gameOver[0] = true;
+                    //     turnLabel.setText("Draw!");
+                    //     showWinDialog("It's a draw!");
+                    //     return;
+                    // }
 
-                    // Switch turn
-                    playerTurn[0] = !playerTurn[0];
-                    turnLabel.setText("Turn: Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)"));
+                    // // Switch turn
+                    // playerTurn[0] = !playerTurn[0];
+                    // turnLabel.setText("Turn: Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)"));
                 });
                 gameBoard.add(cell, col, row);
                 buttons[row][col] = cell;
@@ -678,7 +707,8 @@ public class GuiClient extends Application {
         if (!pendingPlayerList.isEmpty()) {
             playerListView.setItems(javafx.collections.FXCollections.observableArrayList(pendingPlayerList));
         }
-        
+        Button startbt = new Button("Start");
+        Button resetbt = new Button("Reset");
 
         VBox playerStats = new VBox(15, p1Label, p1Stats, p2Label, p2Stats, playerListView);
         playerStats.setPadding(new Insets(20));
@@ -688,7 +718,7 @@ public class GuiClient extends Application {
         HBox root = new HBox(30, gameArea, playerStats);
         root.setPadding(new Insets(20));
 
-        return new Scene(root, 700, 450);
+        return new Scene(root, 700, 600);
     }
 
 
@@ -783,6 +813,38 @@ public class GuiClient extends Application {
             alert.showAndWait();
         });
     }
+
+    private void applyMoveToBoard(String mover, int col) {
+        if (gameOver[0]) return;
+    
+        int dropRow = -1;
+        for (int r = rows - 1; r >= 0; r--) {
+            if (board[r][col] == 0) {
+                dropRow = r;
+                break;
+            }
+        }
+        if (dropRow == -1) return;
+    
+        int currentPlayer = mover.equals(player1Name) ? 1 : 2;
+        board[dropRow][col] = currentPlayer;
+        updateButton(buttons, dropRow, col, currentPlayer);
+        buttons[dropRow][col].setDisable(true);
+    
+        if (checkWin(board, dropRow, col, currentPlayer)) {
+            gameOver[0] = true;
+            turnLabel.setText("Player " + currentPlayer + " wins!");
+            showWinDialog("Player " + currentPlayer + " wins!");
+        } else if (isDraw(board)) {
+            gameOver[0] = true;
+            turnLabel.setText("Draw!");
+            showWinDialog("It's a draw!");
+        } else {
+            playerTurn[0] = !playerTurn[0];
+            turnLabel.setText("Turn: Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)"));
+        }
+    }
+    
 
 
 }
