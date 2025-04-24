@@ -35,6 +35,8 @@ public class GuiClient extends Application {
     private Message lastRoomMessage;
     private String currentUsername;
     private ListView<String> playerListView;
+    private java.util.List<String> pendingPlayerList = new java.util.ArrayList<>();
+
 
 
     
@@ -402,12 +404,26 @@ public class GuiClient extends Application {
                                     AFresultLabel.setText("User is added");
                                 String username = usernameField.getText();
                                 clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
-                            } else if (data.message.startsWith("PLAYER_LIST:")) {
+                            }
+                            // else if (data.message.startsWith("PLAYER_LIST:")) {
+                            //     String[] players = data.message.substring("PLAYER_LIST:".length()).split(",");
+                            //     Platform.runLater(() -> {
+                            //         playerListView.setItems(javafx.collections.FXCollections.observableArrayList(players));
+                            //     });
+                            // }
+                            else if (data.message.startsWith("PLAYER_LIST:")) {
                                 String[] players = data.message.substring("PLAYER_LIST:".length()).split(",");
+                            
                                 Platform.runLater(() -> {
-                                    playerListView.setItems(javafx.collections.FXCollections.observableArrayList(players));
+                                    if (playerListView != null) {
+                                        playerListView.setItems(javafx.collections.FXCollections.observableArrayList(players));
+                                    } else {
+                                        pendingPlayerList.clear();
+                                        for (String p : players) pendingPlayerList.add(p);
+                                    }
                                 });
                             }
+                            
                             else if (data.message.equals("ADDFRIEND_FAIL")) {
                                 if (AFresultLabel != null)
                                     AFresultLabel.setText("User not found or already added.");
@@ -617,6 +633,11 @@ public class GuiClient extends Application {
         playerListView = new ListView<>();
         playerListView.setPrefHeight(80);
         playerListView.setPlaceholder(new Label("Waiting for players..."));
+
+        if (!pendingPlayerList.isEmpty()) {
+            playerListView.setItems(javafx.collections.FXCollections.observableArrayList(pendingPlayerList));
+        }
+        
 
         VBox playerStats = new VBox(15, p1Label, p1Stats, p2Label, p2Stats, playerListView);
         playerStats.setPadding(new Insets(20));
