@@ -345,7 +345,38 @@ public class Server {
                             out.writeObject(new Message(username, "JOIN_FAIL"));
                         }
                         //continue;
+                    }else if (data.message.startsWith("GET_PLAYERLIST:")) {
+                        String roomCode = data.message.split(":")[1];
+                        GameRoom room = gameRooms.get(roomCode);
+                    
+                        if (room != null) {
+                            List<String> players = room.getPlayers();
+                    
+                            StringBuilder playerListMsg = new StringBuilder("PLAYER_LIST:");
+                            for (String p : players) {
+                                playerListMsg.append(p).append(",");
+                            }
+                            if (playerListMsg.length() > 0 && playerListMsg.charAt(playerListMsg.length() - 1) == ',') {
+                                playerListMsg.deleteCharAt(playerListMsg.length() - 1);
+                            }
+                    
+                            // ✅ 로그로 확인
+                            System.out.println("[DEBUG] Sending PLAYER_LIST to clients in room " + roomCode + ":");
+                            for (String p : players) {
+                                System.out.println(" - " + p);
+                            }
+                    
+                            // 전송
+                            for (ClientThread t : clients) {
+                                if (t.username != null && players.contains(t.username)) {
+                                    t.out.writeObject(new Message(t.username, playerListMsg.toString()));
+                                }
+                            }
+                        }
+                    
+                        continue;
                     }
+                    
 
                     else if (data.message.startsWith("LEAVE_ROOM:")) {
                         String username = data.message.split(":")[1];

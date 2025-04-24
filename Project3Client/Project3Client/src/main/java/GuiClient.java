@@ -389,7 +389,9 @@ public class GuiClient extends Application {
                                     String username = usernameField.getText();
                                     
                                     Platform.runLater(() -> primaryStage.setScene(buildGameScene(roomName, username, roomCode))); //fixed
+                                    clientConnection.send(new Message("SERVER", "GET_PLAYERLIST:" + roomCode));
                                 }
+                                
                             }
                             else if (data.message.equals("JOIN_FAIL")) {
                                 showErrorMessage("Join Failed: Invalid or full room.");
