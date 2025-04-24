@@ -249,74 +249,6 @@ public class GuiClient extends Application {
         });
     }
 
-
-        
-
-    // private void setupConnection() {
-    //     clientConnection = new Client(data -> {
-    //         switch (data.type) {
-    //             case TEXT:
-    //                 Platform.runLater(() -> {
-    //                     if (data.message.startsWith("ROOM_CREATED:")) {
-    //                         String roomCode = data.message.split(":")[1];
-    //                         String username = usernameField.getText();
-    //                         primaryStage.setScene(buildGameScene("Room " + roomCode, username));
-    //                     } else if (data.message.startsWith("JOIN_SUCCESS:")) {
-    //                         String roomCode = data.message.split(":")[1];
-    //                         String username = usernameField.getText();
-    //                         primaryStage.setScene(buildGameScene("Room " + roomCode, username));
-    //                     } else if (data.message.equals("JOIN_FAIL")) {
-    //                         showErrorMessage("Join Failed: Invalid or full room.");
-    //                     } else if (data.message.startsWith("FRIENDLIST:")) {
-    //                         String[] parts = data.message.split(":");
-    //                         if (parts.length == 3) {
-    //                             String[] friends = parts[2].split(",");
-    //                             FriendList.getItems().setAll(friends);
-    //                         }
-    //                     } else if (data.message.equals("ADDFRIEND_SUCCESS")) {
-    //                         if (AFresultLabel != null)
-    //                             AFresultLabel.setText("User is added");
-    //                         String username = usernameField.getText();
-    //                         clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
-    //                     } else if (data.message.equals("ADDFRIEND_FAIL")) {
-    //                         if (AFresultLabel != null)
-    //                             AFresultLabel.setText("User not found or already added.");
-    //                     } else {
-    //                         listItems.getItems().add(data.recipient + ": " + data.message);
-    //                     }
-    //                 });
-    //                 break;
-        
-    //             case NEWUSER:
-    //                 Platform.runLater(() -> {
-    //                     listUsers.getItems().add(data.recipient);
-    //                     listItems.getItems().add(data.recipient);
-    //                 });
-    //                 break;
-        
-    //             case DISCONNECT:
-    //                 Platform.runLater(() -> {
-    //                     listUsers.getItems().remove(data.recipient);
-    //                     listItems.getItems().add(data.recipient);
-    //                 });
-    //                 break;
-        
-    //             case WINRATE_INFO:
-    //                 Platform.runLater(() -> {
-    //                     if (ratingLabel != null && gamesLabel != null) {
-    //                         String[] parts = data.message.split(",");
-    //                         String winRate = parts[0];
-    //                         String totalGames = parts[1];
-    //                         ratingLabel.setText("Rating: " + winRate + " %");
-    //                         gamesLabel.setText("Games: " + totalGames + " games");
-    //                     }
-    //                 });
-    //                 break;
-    //         }
-    //     });
-    // }
-        
-        // 밑에가 형이한거 (위에 replace한건 게임코드로 조인하는거 매니징하면서 바꿔본것)
         private void setupConnection() {
             clientConnection = new Client(data -> {
                 switch (data.type) {
@@ -553,11 +485,14 @@ public class GuiClient extends Application {
                 cell.setOnAction(e -> {
                     if (gameOver[0]) return;
                     int dropRow = -1;
+                    System.out.println(username + " clicked column " + finalCol);
                     for (int r = rows-1; r >= 0; r--) {
                         if (board[r][finalCol] == 0) {
                             dropRow = r;
+                            
                             break;
                         }
+                        
                     }
                     if (dropRow == -1) return; // Column full
 
