@@ -174,6 +174,8 @@ public class GuiClient extends Application {
         ratingLabel = new Label("Rating: "); // 초기화 안해주면 조댐댐
         gamesLabel = new Label("Games: ");
 
+        clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + username));
+
         VBox profileBox = new VBox(5, userLabel, ratingLabel, gamesLabel);
         profileBox.setStyle("-fx-border-color: blue; -fx-padding: 10");
 
@@ -383,21 +385,6 @@ public class GuiClient extends Application {
                                 System.out.println("[DEBUG] Received PROFILE_INFO: " + data.message);  // 콘솔 확인용
 
                                 String[] parts = data.message.split(":");
-                                // if (parts.length == 2) {
-                                //     String targetUser = parts[1];
-                                //     String[] stats = parts[2].split(",");
-
-                                //     String winRate = stats[0];
-                                //     String totalGames = stats[1];
-
-                                //     Platform.runLater(() -> {
-                                //         if (targetUser.trim().equals(player1Name)) {
-                                //             p1Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
-                                //         } else if (targetUser.trim().equals(player2Name)) {
-                                //             p2Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
-                                //         }
-                                //     });
-                                // }
                                 String targetUser = parts[1];
                                 String[] stats = parts[2].split(",");
 
@@ -408,14 +395,11 @@ public class GuiClient extends Application {
                                 System.out.println("[DEBUG] player1Name = '" + player1Name + "'");
                                 System.out.println("[DEBUG] player2Name = '" + player2Name + "'");
 
-                                // Platform.runLater(() -> {
-                                //     if (targetUser.trim().equals(player1Name)) {
-                                //         p1Stats.setText("Rating:     ///" + winRate + " %\nGames: " + totalGames);
-                                //     } else if (targetUser.trim().equals(player2Name)) {
-                                //         p2Stats.setText("Rating:     ///" + winRate + " %\nGames: " + totalGames);
-                                //     }
-                                // });
                                 Platform.runLater(() -> {
+                                    if (targetUser.equals(currentUsername)) {
+                                        ratingLabel.setText("Rating: " + winRate + " %");
+                                        gamesLabel.setText("Games: " + totalGames + " games");
+                                    }
                                     if (targetUser.trim().equals(player1Name)) {
                                         System.out.println("[DEBUG] Updating p1Stats");
                                         p1Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
@@ -490,19 +474,24 @@ public class GuiClient extends Application {
                             
                         });
                         break;
-                    case WINRATE_INFO:
+                        case WINRATE_INFO:
                         Platform.runLater(() -> {
-                            if(ratingLabel != null && gamesLabel != null){
-                                String[] parts = data.message.split(",");
+                            String[] parts = data.message.split(",");
                             String winRate = parts[0];
                             String totalGames = parts[1];
 
-                            ratingLabel.setText("Rating: " + winRate + " %");
-                            gamesLabel.setText("Games: " + totalGames + " games");
+                            System.out.println("[DEBUG] Received updated stats for: " + data.recipient);
+                            System.out.println("[DEBUG] winRate = " + winRate + ", totalGames = " + totalGames);
+
+                    
+                            if (data.recipient.equals(player1Name)) {
+                                p1Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
+                            } else if (data.recipient.equals(player2Name)) {
+                                p2Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
                             }
-        
                         });
                         break;
+                    
                 }
             });
     
@@ -670,10 +659,10 @@ public class GuiClient extends Application {
         gameArea.setPadding(new Insets(10));
 
         // Player Info Area
-        p1Label = new Label("Player 1");
+        p1Label = new Label("Player 1 (" + player1Name + ")");
         p1Stats = new Label("Rating: N/A\nGames: N/A");
 
-        p2Label = new Label("Player 2");
+        p2Label = new Label("Player 2 (" + player2Name + ")");
         p2Stats = new Label("Rating: N/A\nGames: N/A");
 
         Message latestMsg = lastRoomMessage; // buildGameScene() 호출 직전에 저장해두는 구조
@@ -686,7 +675,8 @@ public class GuiClient extends Application {
             player1Name = creator;  // 🔥 여기에 저장
             player2Name = null;
 
-            p1Label.setText(creator);
+            // p1Label.setText(creator);
+            p1Label = new Label("Player 1 ( " + creator + " )");
             p1Stats.setText("Rating: " + stats[0] + " %\nGames: " + stats[1]);
 
             clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + creator));
@@ -703,9 +693,12 @@ public class GuiClient extends Application {
                 player2Name = player2;
 
 
-                p1Label.setText(player1);
+                // p1Label.setText(player1);
+                // p2Label.setText(player2);
+                p1Label = new Label("Player 1 ( " + player1Name + " )");
+                p2Label = new Label("Player 2 ( " + player2Name + " )");
                 p1Stats.setText("Rating: " + stats1[0] + " %\nGames: " + stats1[1]);
-                p2Label.setText(player2);
+                
                 p2Stats.setText("Rating: " + stats2[0] + " %\nGames: " + stats2[1]);
 
                 clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player1));
@@ -917,6 +910,14 @@ public class GuiClient extends Application {
             gameOver[0] = true;
             turnLabel.setText("Player " + currentPlayer + " wins!");
             showWinDialog("Player " + currentPlayer + " wins!");
+            System.out.println("[DEBUG] Game Over - Winner: " + (currentPlayer == 1 ? player1Name : player2Name));
+
+            String winner = (currentPlayer == 1) ? player1Name : player2Name;
+            String loser  = (currentPlayer == 1) ? player2Name : player1Name;
+            clientConnection.send(new Message("SERVER", "GAME_RESULT:" + winner + ":" + loser));
+
+            clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + currentUsername));
+            return;
         } else if (isDraw(board)) {
             gameOver[0] = true;
             turnLabel.setText("Draw!");

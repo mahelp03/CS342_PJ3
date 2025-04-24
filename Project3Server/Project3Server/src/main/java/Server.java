@@ -414,6 +414,39 @@ public class Server {
                         }
                         continue;
                     }
+                    else if (data.message.startsWith("GAME_RESULT:")) {
+                        String[] parts = data.message.split(":");
+                        String winner = parts[1];
+                        String loser = parts[2];
+                    
+                        // 전적 업데이트
+                        AccountDatabase.incrementGameCount(winner);
+                        AccountDatabase.incrementGameCount(loser);
+                        AccountDatabase.incrementWinCount(winner);  // 승자만 승리 수 증가
+
+                        System.out.println("[DEBUG] GAME_RESULT processed.");
+                        System.out.println("[DEBUG] Winner: " + winner + ", Loser: " + loser);
+                        System.out.println("[DEBUG] " + winner + " Games: " + AccountDatabase.getGameCount(winner) + ", Wins: " + AccountDatabase.getWinCount(winner));
+                        System.out.println("[DEBUG] " + loser + " Games: " + AccountDatabase.getGameCount(loser) + ", Wins: " + AccountDatabase.getWinCount(loser));
+                        double winRateW = AccountDatabase.getWinRate(winner);
+                        int gamesW = AccountDatabase.getGameCount(winner);
+                        Message m1 = new Message(winner, winRateW + "," + gamesW, MessageType.WINRATE_INFO);
+
+                        double winRateL = AccountDatabase.getWinRate(loser);
+                        int gamesL = AccountDatabase.getGameCount(loser);
+                        Message m2 = new Message(loser, winRateL + "," + gamesL, MessageType.WINRATE_INFO);
+
+                        for (ClientThread t : clients) {
+                            if (t.username != null && t.username.equals(winner)) {
+                                t.out.writeObject(m1);
+                            }
+                            if (t.username != null && t.username.equals(loser)) {
+                                t.out.writeObject(m2);
+                            }
+                        }
+                        System.out.println("[STATS] Updated results - Winner: " + winner + ", Loser: " + loser);
+                        continue;
+                    }
                     
                     
 
