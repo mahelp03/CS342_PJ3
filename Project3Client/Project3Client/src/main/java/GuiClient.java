@@ -19,6 +19,8 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
+
+
 public class GuiClient extends Application {
 
     TextField c1;
@@ -32,6 +34,8 @@ public class GuiClient extends Application {
     ListView<String> listItems, FriendList;
     private Message lastRoomMessage;
     private String currentUsername;
+    private ListView<String> playerListView;
+
 
     
 
@@ -398,7 +402,13 @@ public class GuiClient extends Application {
                                     AFresultLabel.setText("User is added");
                                 String username = usernameField.getText();
                                 clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
-                            } else if (data.message.equals("ADDFRIEND_FAIL")) {
+                            } else if (data.message.startsWith("PLAYER_LIST:")) {
+                                String[] players = data.message.substring("PLAYER_LIST:".length()).split(",");
+                                Platform.runLater(() -> {
+                                    playerListView.setItems(javafx.collections.FXCollections.observableArrayList(players));
+                                });
+                            }
+                            else if (data.message.equals("ADDFRIEND_FAIL")) {
                                 if (AFresultLabel != null)
                                     AFresultLabel.setText("User not found or already added.");
                             } else {
@@ -604,8 +614,11 @@ public class GuiClient extends Application {
                 p2Stats.setText("Rating: " + stats2[0] + " %\nGames: " + stats2[1]);
             }
         }
+        playerListView = new ListView<>();
+        playerListView.setPrefHeight(80);
+        playerListView.setPlaceholder(new Label("Waiting for players..."));
 
-        VBox playerStats = new VBox(15, p1Label, p1Stats, p2Label, p2Stats);
+        VBox playerStats = new VBox(15, p1Label, p1Stats, p2Label, p2Stats, playerListView);
         playerStats.setPadding(new Insets(20));
         playerStats.setStyle("-fx-background-color: #F0F8FF; -fx-border-color: black;");
         playerStats.setPrefWidth(180);
