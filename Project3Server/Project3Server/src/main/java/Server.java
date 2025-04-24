@@ -287,9 +287,17 @@ public class Server {
                         }
                         continue;
                     }
+                    else if (data.message.startsWith("PROFILE_REQUEST:")) {
+                        String username = data.message.split(":")[1];
                     
-
+                        double rate = AccountDatabase.getWinRate(username);
+                        int games = AccountDatabase.getGameCount(username);
                     
+                        String profileInfo = "PROFILE_INFO:" + username + ":" + rate + "," + games;
+                        out.writeObject(new Message(username, profileInfo));
+                        System.out.println("[DEBUG] Sent profile for " + username + ": " + rate + " %, " + games + " games");
+                        continue;
+                    }
                     else if (data.message.startsWith("JOIN_RANDOM_REQUEST:")) {
                         String username = data.message.split(":")[1];
                         GameRoom joinedRoom = null;
@@ -298,24 +306,79 @@ public class Server {
                             if (!room.isFull()) {
                                 room.addPlayer(username);
                                 joinedRoom = room;
-
+                    
                                 System.out.println("[RANDOM JOIN] User: " + username + " joined RoomCode: " + room.getRoomCode());
                                 System.out.println("[ROOM STATE] Players in room " + room.getRoomCode() + ":");
                                 for (String player : room.getPlayers()) {
                                     System.out.println(" - " + player);
                                 }
-
+                    
                                 break;
                             }
                         }
                     
                         if (joinedRoom != null) {
-                            out.writeObject(new Message(username, "JOIN_SUCCESS:" + joinedRoom.getRoomName() + ":" + joinedRoom.getRoomCode()));
+                            List<String> players = joinedRoom.getPlayers();
+                            if (players.size() == 2) {
+                                String player1 = players.get(0);
+                                String player2 = players.get(1);
+                    
+                                double rate1 = AccountDatabase.getWinRate(player1);
+                                int games1 = AccountDatabase.getGameCount(player1);
+                    
+                                double rate2 = AccountDatabase.getWinRate(player2);
+                                int games2 = AccountDatabase.getGameCount(player2);
+                    
+                                String payload = "JOIN_SUCCESS:" + joinedRoom.getRoomName() + ":" + joinedRoom.getRoomCode() + ":" +
+                                        player1 + ":" + rate1 + "," + games1 + ":" +
+                                        player2 + ":" + rate2 + "," + games2;
+                    
+                                for (ClientThread t : clients) {
+                                    if (t.username != null && (t.username.equals(player1) || t.username.equals(player2))) {
+                                        t.out.writeObject(new Message(t.username, payload));
+                                    }
+                                }
+                            } else {
+                                String player1 = players.get(0);
+                                double rate1 = AccountDatabase.getWinRate(player1);
+                                int games1 = AccountDatabase.getGameCount(player1);
+                                String payload = "ROOM_CREATED:" + joinedRoom.getRoomName() + ":" + joinedRoom.getRoomCode() + ":" + player1 + ":" + rate1 + "," + games1;
+                                out.writeObject(new Message(username, payload));
+                            }
                         } else {
                             out.writeObject(new Message(username, "JOIN_FAIL"));
                         }
-                        //continue;
-                    }else if (data.message.startsWith("GET_PLAYERLIST:")) {
+                    }
+                    
+
+                    
+                    // else if (data.message.startsWith("JOIN_RANDOM_REQUEST:")) {
+                    //     String username = data.message.split(":")[1];
+                    //     GameRoom joinedRoom = null;
+                    
+                    //     for (GameRoom room : gameRooms.values()) {
+                    //         if (!room.isFull()) {
+                    //             room.addPlayer(username);
+                    //             joinedRoom = room;
+
+                    //             System.out.println("[RANDOM JOIN] User: " + username + " joined RoomCode: " + room.getRoomCode());
+                    //             System.out.println("[ROOM STATE] Players in room " + room.getRoomCode() + ":");
+                    //             for (String player : room.getPlayers()) {
+                    //                 System.out.println(" - " + player);
+                    //             }
+
+                    //             break;
+                    //         }
+                    //     }
+                    
+                    //     if (joinedRoom != null) {
+                    //         out.writeObject(new Message(username, "JOIN_SUCCESS:" + joinedRoom.getRoomName() + ":" + joinedRoom.getRoomCode()));
+                    //     } else {
+                    //         out.writeObject(new Message(username, "JOIN_FAIL"));
+                    //     }
+                    //     //continue;
+                    // }
+                    else if (data.message.startsWith("GET_PLAYERLIST:")) {
                         String roomCode = data.message.split(":")[1];
                         GameRoom room = gameRooms.get(roomCode);
                     

@@ -36,6 +36,13 @@ public class GuiClient extends Application {
     private String currentUsername;
     private ListView<String> playerListView;
     private java.util.List<String> pendingPlayerList = new java.util.ArrayList<>();
+    private Label p1Label;
+    private Label p1Stats;
+    private Label p2Label;
+    private Label p2Stats;
+
+    private String player1Name;
+    private String player2Name;
 
 
 
@@ -309,23 +316,112 @@ public class GuiClient extends Application {
                                 String username = usernameField.getText();
                                 primaryStage.setScene(buildGameScene(roomName, username, roomCode)); //fixed
                             }
+                            // else if (data.message.startsWith("JOIN_SUCCESS:")) {
+                            //     //String roomCode = data.message.split(":")[1];
+                            //     //String username = usernameField.getText();
+                            //     //primaryStage.setScene(buildGameScene("Room " + roomCode, username));
+                            //     System.out.println("[DEBUG] Received JOIN_SUCCESS: " + data.message);
+                            //     lastRoomMessage = data;
+                            //     String[] parts = data.message.split(":");
+                            //     if (parts.length >= 3) {
+                            //         String roomName = parts[1];
+                            //         String roomCode = parts[2];
+                            //         String player1 = parts[3];
+                            //         String player2 = parts[5];
+
+                            //         String username = usernameField.getText();
+                                    
+                            //         Platform.runLater(() -> primaryStage.setScene(buildGameScene(roomName, username, roomCode))); //fixed
+                            //         clientConnection.send(new Message("SERVER", "GET_PLAYERLIST:" + roomCode));
+                            //         clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player1));
+                            //         clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player2));
+                            //     }
+                                
+                            // }
                             else if (data.message.startsWith("JOIN_SUCCESS:")) {
-                                //String roomCode = data.message.split(":")[1];
-                                //String username = usernameField.getText();
-                                //primaryStage.setScene(buildGameScene("Room " + roomCode, username));
+                                System.out.println("[DEBUG] Received JOIN_SUCCESS: " + data.message);
                                 lastRoomMessage = data;
+                            
                                 String[] parts = data.message.split(":");
-                                if (parts.length >= 3) {
+                                if (parts.length >= 7) {
                                     String roomName = parts[1];
                                     String roomCode = parts[2];
-
-                                    String username = usernameField.getText();
-                                    
-                                    Platform.runLater(() -> primaryStage.setScene(buildGameScene(roomName, username, roomCode))); //fixed
+                                    String player1 = parts[3];
+                                    String player2 = parts[5];
+                            
+                                    // 🔑 저장
+                                    player1Name = player1;
+                                    player2Name = player2;
+                            
+                                    System.out.println("[DEBUG] player1Name = " + player1Name);
+                                    System.out.println("[DEBUG] player2Name = " + player2Name);
+                            
+                                    // 🔁 UI 스레드에서 화면 전환
+                                    Platform.runLater(() -> {
+                                        System.out.println("[DEBUG] Switching to game scene...");
+                                        primaryStage.setScene(buildGameScene(roomName, usernameField.getText(), roomCode));
+                                    });
+                            
+                                    // 요청
                                     clientConnection.send(new Message("SERVER", "GET_PLAYERLIST:" + roomCode));
+                                    clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player1));
+                                    clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player2));
                                 }
-                                
                             }
+                            
+                            
+
+                            else if (data.message.startsWith("PROFILE_INFO:")) {
+                                System.out.println("[DEBUG] Received PROFILE_INFO: " + data.message);  // 콘솔 확인용
+
+                                String[] parts = data.message.split(":");
+                                // if (parts.length == 2) {
+                                //     String targetUser = parts[1];
+                                //     String[] stats = parts[2].split(",");
+
+                                //     String winRate = stats[0];
+                                //     String totalGames = stats[1];
+
+                                //     Platform.runLater(() -> {
+                                //         if (targetUser.trim().equals(player1Name)) {
+                                //             p1Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
+                                //         } else if (targetUser.trim().equals(player2Name)) {
+                                //             p2Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
+                                //         }
+                                //     });
+                                // }
+                                String targetUser = parts[1];
+                                String[] stats = parts[2].split(",");
+
+                                String winRate = stats[0];
+                                String totalGames = stats[1];
+
+                                System.out.println("[DEBUG] targetUser = '" + targetUser + "'");
+                                System.out.println("[DEBUG] player1Name = '" + player1Name + "'");
+                                System.out.println("[DEBUG] player2Name = '" + player2Name + "'");
+
+                                // Platform.runLater(() -> {
+                                //     if (targetUser.trim().equals(player1Name)) {
+                                //         p1Stats.setText("Rating:     ///" + winRate + " %\nGames: " + totalGames);
+                                //     } else if (targetUser.trim().equals(player2Name)) {
+                                //         p2Stats.setText("Rating:     ///" + winRate + " %\nGames: " + totalGames);
+                                //     }
+                                // });
+                                Platform.runLater(() -> {
+                                    if (targetUser.trim().equals(player1Name)) {
+                                        System.out.println("[DEBUG] → Updating p1Stats");
+                                        p1Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
+                                    } else if (targetUser.trim().equals(player2Name)) {
+                                        System.out.println("[DEBUG] → Updating p2Stats");
+                                        p2Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
+                                    } else {
+                                        System.out.println("[DEBUG] ❌ targetUser didn't match either player name");
+                                    }
+                                });
+                            }
+                            
+                            
+
                             else if (data.message.equals("JOIN_FAIL")) {
                                 showErrorMessage("Join Failed: Invalid or full room.");
                             } else if (data.message.startsWith("FRIENDLIST:")) {
@@ -350,6 +446,11 @@ public class GuiClient extends Application {
                                         pendingPlayerList.clear();
                                         for (String p : players) pendingPlayerList.add(p);
                                     }
+                                    if (players.length < 2) {
+                                        if (p2Label != null) p2Label.setText("Player 2");
+                                        if (p2Stats != null) p2Stats.setText("Rating: N/A\nGames: N/A");
+                                    }
+
                                 });
                             }
 
@@ -391,10 +492,6 @@ public class GuiClient extends Application {
                             ratingLabel.setText("Rating: " + winRate + " %");
                             gamesLabel.setText("Games: " + totalGames + " games");
                             }
-                            // 받은 메시지 파싱
-                            
-
-                            // updateLobbyStats(winRate, totalGames);
         
                         });
                         break;
@@ -532,36 +629,46 @@ public class GuiClient extends Application {
         gameArea.setPadding(new Insets(10));
 
         // Player Info Area
-        Label p1Label = new Label("Player 1");
-        Label p1Stats = new Label("Rating: N/A\nGames: N/A");
+        p1Label = new Label("Player 1");
+        p1Stats = new Label("Rating: N/A\nGames: N/A");
 
-        Label p2Label = new Label("Player 2");
-        Label p2Stats = new Label("Rating: N/A\nGames: N/A");
+        p2Label = new Label("Player 2");
+        p2Stats = new Label("Rating: N/A\nGames: N/A");
 
         Message latestMsg = lastRoomMessage; // buildGameScene() 호출 직전에 저장해두는 구조
+
         if (latestMsg != null && latestMsg.message.startsWith("ROOM_CREATED:")) {
             String[] parts = latestMsg.message.split(":");
             String creator = parts[3];
             String[] stats = parts[4].split(",");
+
+            player1Name = creator;  // 🔥 여기에 저장
+            player2Name = null;
+
             p1Label.setText(creator);
             p1Stats.setText("Rating: " + stats[0] + " %\nGames: " + stats[1]);
+
+            clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + creator));
+
         } else if (latestMsg != null && latestMsg.message.startsWith("JOIN_SUCCESS:")) {
             String[] parts = latestMsg.message.split(":");
             if (parts.length >= 8) {
-                // p1Label.setText(parts[3]);
-                // p1Stats.setText("Rating: " + parts[4].split(",")[0] + " %\nGames: " + parts[4].split(",")[1]);
-
-                // p2Label.setText(parts[5]);
-                // p2Stats.setText("Rating: " + parts[6].split(",")[0] + " %\nGames: " + parts[6].split(",")[1]);
                 String player1 = parts[3];
                 String[] stats1 = parts[4].split(",");
                 String player2 = parts[5];
                 String[] stats2 = parts[6].split(",");
 
+                player1Name = player1;
+                player2Name = player2;
+
+
                 p1Label.setText(player1);
                 p1Stats.setText("Rating: " + stats1[0] + " %\nGames: " + stats1[1]);
                 p2Label.setText(player2);
                 p2Stats.setText("Rating: " + stats2[0] + " %\nGames: " + stats2[1]);
+
+                clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player1));
+                clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player2));
             }
         }
         playerListView = new ListView<>();
