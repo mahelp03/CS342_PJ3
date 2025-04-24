@@ -739,6 +739,16 @@ public class GuiClient extends Application {
                 gameStarted[0] = true;
                 startbt.setDisable(true);
                 resetbt.setDisable(false);
+
+                // 추가
+                for (int row = 0; row < rows; row++) {
+                    for (int col = 0; col < cols; col++) {
+                        if (board[row][col] == 0) {
+                            buttons[row][col].setDisable(false); // Enable empty cells for a new round
+                        }
+                    }
+                }
+                
             }
         
             for (int row = 0; row < rows; row++) {
@@ -761,6 +771,7 @@ public class GuiClient extends Application {
             gameStarted[0] = false;
             gameOver[0] = false;
             resetbt.setDisable(true);
+            startbt.setDisable(false); // start 락풀기
             turnLabel.setText("Game reset. Press Start to begin.");
         
             for (int row = 0; row < rows; row++) {
