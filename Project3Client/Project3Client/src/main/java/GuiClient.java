@@ -386,6 +386,7 @@ public class GuiClient extends Application {
                                 if (parts.length >= 3) {
                                     String roomName = parts[1];
                                     String roomCode = parts[2];
+
                                     String username = usernameField.getText();
                                     
                                     Platform.runLater(() -> primaryStage.setScene(buildGameScene(roomName, username, roomCode))); //fixed
@@ -407,12 +408,6 @@ public class GuiClient extends Application {
                                 String username = usernameField.getText();
                                 clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
                             }
-                            // else if (data.message.startsWith("PLAYER_LIST:")) {
-                            //     String[] players = data.message.substring("PLAYER_LIST:".length()).split(",");
-                            //     Platform.runLater(() -> {
-                            //         playerListView.setItems(javafx.collections.FXCollections.observableArrayList(players));
-                            //     });
-                            // }
                             else if (data.message.startsWith("PLAYER_LIST:")) {
                                 String[] players = data.message.substring("PLAYER_LIST:".length()).split(",");
                             
@@ -425,6 +420,8 @@ public class GuiClient extends Application {
                                     }
                                 });
                             }
+
+                            
                             
                             else if (data.message.equals("ADDFRIEND_FAIL")) {
                                 if (AFresultLabel != null)

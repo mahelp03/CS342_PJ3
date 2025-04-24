@@ -199,58 +199,28 @@ public class Server {
                     
                         String payload = "ROOM_CREATED:" + roomName + ":" + roomCode + ":" + creator + ":" + rate1 + "," + games1;
                         out.writeObject(new Message(creator, payload));
-                        continue;
+                        // continue;
+                        List<String> players = newRoom.getPlayers();
+                        StringBuilder playerListMsg = new StringBuilder("PLAYER_LIST:");
+                        for (String p : players) {
+                            playerListMsg.append(p).append(",");
+                        }
+                        if (playerListMsg.length() > 0 && playerListMsg.charAt(playerListMsg.length() - 1) == ',') {
+                            playerListMsg.deleteCharAt(playerListMsg.length() - 1);
+                        }
+
+                        System.out.println("[DEBUG] Sending PLAYER_LIST to creator of new room " + roomCode + ":");
+                        for (String p : players) {
+                            System.out.println(" - " + p);
+                        }
+
+                        for (ClientThread t : clients) {
+                            if (t.username != null && players.contains(t.username)) {
+                                t.out.writeObject(new Message(t.username, playerListMsg.toString()));
+                            }
+                        }
                     }
-                    // else if (data.message.startsWith("JOIN_ROOM:")) {
-                    //     String[] parts = data.message.split(":");
-                    //     String username = parts[1];
-                    //     String roomCode = parts[2];
-
-                    //     GameRoom room = gameRooms.get(roomCode);
-                    //     if (room != null && !room.isFull()) {
-                    //         room.addPlayer(username);
-
-                    //         List<String> players = room.getPlayers();
-                    //         String player1 = players.get(0);
-                    //         String player2 = username;
-
-                    //         double rate1 = AccountDatabase.getWinRate(player1);
-                    //         int games1 = AccountDatabase.getGameCount(player1);
-
-                    //         String payload = null;
-
-                    //         // double rate2 = AccountDatabase.getWinRate(player2);
-                    //         // int games2 = AccountDatabase.getGameCount(player2);
-
-                    //         // String payload = "JOIN_SUCCESS:" + roomCode + ":" +
-                    //         //                 player1 + ":" + rate1 + "," + games1 + ":" +
-                    //         //                 player2 + ":" + rate2 + "," + games2;
-                    //         if (player2 != null){
-                    //             double rate2 = AccountDatabase.getWinRate(player2);
-                    //             int games2 = AccountDatabase.getGameCount(player2);
-
-                    //             payload = "JOIN_SUCCESS:" + room.getRoomName() + ":" + roomCode + ":" + player1 + ":" + rate1 + "," + games1 + ":" + player2 + ":" + rate2 + "," + games2;
-
-
-                    //             //out.writeObject(new Message(username, payload));
-                    //             for (ClientThread t : clients) {
-                    //                 if (t.username != null && (t.username.equals(player1) || t.username.equals(player2))) {
-                    //                     t.out.writeObject(new Message(t.username, payload));
-                    //                 }
-                    //             }
-                    //         }else{
-                    //             payload = "ROOM_CREATED:" + room.getRoomName() + ":" + roomCode + ":" + player1 + ":" + rate1 + "," + games1;
-                    //             out.writeObject(new Message(username, payload));
-                    //         }
-
-                            
-                            
-                    //     } else {
-                    //         out.writeObject(new Message(username, "JOIN_FAIL"));
-                    //     }
-                    //     continue;
-                    // }
-                    // ✅ PATCH: Server.java > JOIN_ROOM 처리 부분만 수정
+                    
                     else if (data.message.startsWith("JOIN_ROOM:")) {
                         String[] parts = data.message.split(":");
                         String username = parts[1];
@@ -384,11 +354,38 @@ public class Server {
                         for (GameRoom room : gameRooms.values()) {
                             if (room.hasPlayer(username)) {
                                 room.removePlayer(username);
+                    
+                                // ✅ 콘솔 확인
+                                System.out.println("[ROOM LEFT] " + username + " left room " + room.getRoomCode());
+                    
+                                // ✅ PLAYER_LIST 다시 전송
+                                List<String> players = room.getPlayers();
+                                StringBuilder playerListMsg = new StringBuilder("PLAYER_LIST:");
+                                for (String p : players) {
+                                    playerListMsg.append(p).append(",");
+                                }
+                                if (playerListMsg.length() > 0 && playerListMsg.charAt(playerListMsg.length() - 1) == ',') {
+                                    playerListMsg.deleteCharAt(playerListMsg.length() - 1);
+                                }
+                    
+                                System.out.println("[DEBUG] Broadcasting updated PLAYER_LIST after leave:");
+                                for (String p : players) {
+                                    System.out.println(" - " + p);
+                                }
+                    
+                                for (ClientThread t : clients) {
+                                    if (t.username != null && players.contains(t.username)) {
+                                        t.out.writeObject(new Message(t.username, playerListMsg.toString()));
+                                    }
+                                }
+                    
                                 break;
                             }
                         }
+                    
                         continue;
                     }
+                    
                     
                     
                     callback.accept(data);
