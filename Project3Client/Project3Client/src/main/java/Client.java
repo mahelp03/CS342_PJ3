@@ -8,17 +8,11 @@ import java.util.function.Consumer;
 
 
 public class Client extends Thread{
-
-	
 	Socket socketClient;
-	
 	ObjectOutputStream out;
 	ObjectInputStream in;
-	
 	private Consumer<Message> callback;
-	
 	Client(Consumer<Message> call){
-	
 		callback = call;
 	}
 	
@@ -30,21 +24,19 @@ public class Client extends Thread{
 	    in = new ObjectInputStream(socketClient.getInputStream());
 	    socketClient.setTcpNoDelay(true);
 		}
-		catch(Exception e) {}
-		
+		catch(Exception e) {
+
+		}
 		while(true) {
-			 
 			try {
 			Message message = (Message) in.readObject();
 			callback.accept(message);
 			}
 			catch(Exception e) {}
 		}
-	
     }
 	
 	public void send(Message data) {
-		
 		try {
 			out.writeObject(data);
 		} catch (IOException e) {
