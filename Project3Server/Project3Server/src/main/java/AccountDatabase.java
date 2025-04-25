@@ -76,6 +76,24 @@ public class AccountDatabase {
             int wins = winMap.getOrDefault(user, 0);
             int total = totalMap.getOrDefault(user, 0);
             List<String> history = gameHistories.getOrDefault(user, new ArrayList<>());
+<<<<<<< Updated upstream
+=======
+    
+            System.out.println("USER: " + user);
+            System.out.println("PASS: " + password);
+            System.out.println("WINS: " + wins);
+            System.out.println("TOTAL: " + total);
+            for (String entry : history) {
+                System.out.println("HIST: " + entry);
+            }
+            System.out.println("---");
+        }
+    }
+    public static void setPassword(String username, String password) {
+        passwordMap.put(username, password);
+    }
+    
+>>>>>>> Stashed changes
     
             System.out.println("USER: " + user);
             System.out.println("PASS: " + password);
