@@ -17,6 +17,12 @@ public class Server {
         callback = call;
         server = new TheServer();
         server.start();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("[SHUTDOWN] Saving account data...");
+            // AccountDatabase.saveToFile("account_data.txt");
+            AccountDatabase.printAllAccountData(); // 👈 로그 출력
+        }));
     }
 
     public class TheServer extends Thread {
