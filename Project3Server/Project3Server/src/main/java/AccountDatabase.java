@@ -1,3 +1,9 @@
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -82,5 +88,57 @@ public class AccountDatabase {
     public static List<String> getGameHistory(String username) {
         return gameHistories.getOrDefault(username, new ArrayList<>());
     }
+
+    public static void loadFromFile(String filename) {
+        File file = new File(filename);
+        if (!file.exists()) return;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] fields = line.split(",");
+                String username = "";
+                String password = "";
+                int wins = 0;
+                int total = 0;
+                List<String> history = new ArrayList<>();
+
+                for (String field : fields) {
+                    if (field.startsWith("username:")) username = field.substring(9);
+                    else if (field.startsWith("password:")) password = field.substring(9);
+                    else if (field.startsWith("wins:")) wins = Integer.parseInt(field.substring(5));
+                    else if (field.startsWith("total:")) total = Integer.parseInt(field.substring(6));
+                    else if (field.startsWith("history:")) {
+                        String[] histItems = field.substring(8).split(";");
+                        history = new ArrayList<>(List.of(histItems));
+                    }
+                }
+
+                LoginHandler.getAllUsers().put(username, password);
+                winMap.put(username, wins);
+                totalMap.put(username, total);
+                gameHistories.put(username, history);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public static void saveToFile(String filename) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
+            for (String username : LoginHandler.getAllUsers().keySet()) {
+                String password = LoginHandler.getAllUsers().get(username);
+                int wins = winMap.getOrDefault(username, 0);
+                int total = totalMap.getOrDefault(username, 0);
+                List<String> history = gameHistories.getOrDefault(username, new ArrayList<>());
+                String historyStr = String.join(";", history);
+
+                writer.printf("username:%s,password:%s,wins:%d,total:%d,history:%s\n",
+                        username, password, wins, total, historyStr);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     
 }

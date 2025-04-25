@@ -21,6 +21,7 @@ public class Server {
 
     Server(Consumer<Message> call) {
         callback = call;
+        AccountDatabase.loadFromFile("account_data.txt");
         server = new TheServer();
         server.start();
     }

@@ -37,7 +37,10 @@ public class GuiServer extends Application {
         primaryStage.setScene(mainScene);
         primaryStage.show();
 
-        primaryStage.setOnCloseRequest((WindowEvent t) -> System.exit(0));
+        primaryStage.setOnCloseRequest((WindowEvent t) -> {
+            AccountDatabase.saveToFile("account_data.txt");
+            System.exit(0);
+        });
 
         
 
