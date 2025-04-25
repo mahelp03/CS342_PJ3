@@ -1,4 +1,4 @@
-username:111,password:111,wins:2,total:2,history:;Room YOL1G4 - 111 vs 222: 111 Won!!
-username:222,password:222,wins:0,total:2,history:;Room YOL1G4 - 111 vs 222: 111 Won!!
-username:333,password:333,wins:0,total:0,history:
-username:444,password:444,wins:0,total:0,history:
+Username: 111,Password: 111,Wins: 2,Total: 2,History: Room 9ZVY8P - 111 vs 222: 111 Won!!,Friends: 333
+Username: 222,Password: 222,Wins: 0,Total: 2,History: Room 9ZVY8P - 111 vs 222: 111 Won!!,Friends: 
+Username: 333,Password: 333,Wins: 2,Total: 2,History: Room MJEOWU - 333 vs 444: 333 Won!!,Friends: 111
+Username: 444,Password: 444,Wins: 0,Total: 2,History: Room MJEOWU - 333 vs 444: 333 Won!!,Friends: 

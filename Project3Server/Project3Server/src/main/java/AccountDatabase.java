@@ -102,27 +102,42 @@ public class AccountDatabase {
                 int wins = 0;
                 int total = 0;
                 List<String> history = new ArrayList<>();
+                List<String> friendList = new ArrayList<>();
 
                 for (String field : fields) {
-                    if (field.startsWith("username:")) username = field.substring(9);
-                    else if (field.startsWith("password:")) password = field.substring(9);
-                    else if (field.startsWith("wins:")) wins = Integer.parseInt(field.substring(5));
-                    else if (field.startsWith("total:")) total = Integer.parseInt(field.substring(6));
-                    else if (field.startsWith("history:")) {
+                    if (field.startsWith("Username: ")) username = field.substring(9);
+                    else if (field.startsWith("Password: ")) password = field.substring(9);
+                    else if (field.startsWith("Wins: ")) wins = Integer.parseInt(field.substring(5));
+                    else if (field.startsWith("Total: ")) total = Integer.parseInt(field.substring(6));
+                    else if (field.startsWith("History: ")) {
                         String[] histItems = field.substring(8).split(";");
                         history = new ArrayList<>(List.of(histItems));
                     }
+                    else if (field.startsWith("Friends: ")) {
+                        String[] friendItems = field.substring(8).split(";");
+                        for (String friend : friendItems) {
+                            if (!friend.isBlank()) {
+                                friendList.add(friend);
+                            }
+                        }
+                    }
                 }
 
-                LoginHandler.getAllUsers().put(username, password);
-                winMap.put(username, wins);
-                totalMap.put(username, total);
-                gameHistories.put(username, history);
+                if (!username.isBlank()) {
+                    LoginHandler.getAllUsers().put(username, password);
+                    winMap.put(username, wins);
+                    totalMap.put(username, total);
+                    gameHistories.put(username, history);
+                    for (String friend : friendList) {
+                        FriendHander.addFriend(username, friend);
+                    }
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
     public static void saveToFile(String filename) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
             for (String username : LoginHandler.getAllUsers().keySet()) {
@@ -130,15 +145,19 @@ public class AccountDatabase {
                 int wins = winMap.getOrDefault(username, 0);
                 int total = totalMap.getOrDefault(username, 0);
                 List<String> history = gameHistories.getOrDefault(username, new ArrayList<>());
+                Set<String> friends = FriendHander.getFriends(username);
+    
                 String historyStr = String.join(";", history);
-
-                writer.printf("username:%s,password:%s,wins:%d,total:%d,history:%s\n",
-                        username, password, wins, total, historyStr);
+                String friendStr = String.join(";", friends);
+    
+                writer.printf("Username: %s,Password: %s,Wins: %d,Total: %d,History: %s,Friends: %s\n",
+                        username, password, wins, total, historyStr, friendStr);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+    
 
     
 }

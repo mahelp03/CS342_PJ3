@@ -62,6 +62,7 @@ public class GuiClient extends Application {
     private Label turnLabel;
     Button startbt = new Button("Start");
     Button resetbt = new Button("Reset");
+    Button chatbt = new Button("Chat");
     private boolean[] gameStarted = {false};
     private ListView<String> historyList;
 
@@ -69,6 +70,7 @@ public class GuiClient extends Application {
     private Scene gameScene;
     private ListView<String> gameChatList;
     private ComboBox<String> recipientComboBox;
+    private Scene previousScene;
 
     ListView<String> chatMessages; // new chat for player
 
@@ -184,7 +186,11 @@ public class GuiClient extends Application {
         });
     
         b2.setOnAction(e -> {
-            primaryStage.setScene(lobbyScene);
+            if (previousScene != null) {
+                primaryStage.setScene(previousScene); // go back 
+            } else {
+                primaryStage.setScene(lobbyScene); // default
+            }
         });
     
         clientBox = new VBox(10, fields, chatMessages);
@@ -635,14 +641,6 @@ public class GuiClient extends Application {
         Label header = new Label("Room: " + roomName + " | Code: " + roomCode);
         header.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
 
-        // final int rows = 6;
-        // final int cols = 7;
-        // int[][] board = new int[rows][cols]; // 0=empty, 1=red, 2=yellow
-        // boolean[] playerTurn = {true}; // Player 1: true, Player 2: false
-        // Button[][] buttons = new Button[rows][cols];
-        // boolean[] gameOver = {false};
-        // Label turnLabel = new Label("Turn: Player 1 (Red)");
-
         GridPane gameBoard = new GridPane();
         gameBoard.setPadding(new Insets(10));
         gameBoard.setHgap(5);
@@ -655,9 +653,6 @@ public class GuiClient extends Application {
         turnLabel = new Label("Turn: Player 1 (Red)");
         boolean[] gameStarted = {false};
         
-        
-
-        // initialize buttons and board (여기서부턴 안바꿈)
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
                 Button cell = new Button();
@@ -687,39 +682,7 @@ public class GuiClient extends Application {
 
                     
                     clientConnection.send(new Message("SERVER", "MOVE:" + roomCode + ":" + username + ":" + finalCol));
-                    // if (gameOver[0]) return;
-                    // int dropRow = -1;
-                    // System.out.println(username + " clicked column " + finalCol);
-                    // for (int r = rows-1; r >= 0; r--) {
-                    //     if (board[r][finalCol] == 0) {
-                    //         dropRow = r;
-                            
-                    //         break;
-                    //     }
-                        
-                    // }
-                    // if (dropRow == -1) return; // Column full
-
-                    // int currentPlayer = playerTurn[0] ? 1 : 2;
-                    // board[dropRow][finalCol] = currentPlayer;
-                    // updateButton(buttons, dropRow, finalCol, currentPlayer);
-                    // buttons[dropRow][finalCol].setDisable(true);
-
-                    // if (checkWin(board, dropRow, finalCol, currentPlayer)) {
-                    //     gameOver[0] = true;
-                    //     turnLabel.setText("Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)") + " wins!");
-                    //     showWinDialog("Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)") + " wins!");
-                    //     return;
-                    // } else if (isDraw(board)) {
-                    //     gameOver[0] = true;
-                    //     turnLabel.setText("Draw!");
-                    //     showWinDialog("It's a draw!");
-                    //     return;
-                    // }
-
-                    // // Switch turn
-                    // playerTurn[0] = !playerTurn[0];
-                    // turnLabel.setText("Turn: Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)"));
+                    
                 });
                 gameBoard.add(cell, col, row);
                 buttons[row][col] = cell;
@@ -730,11 +693,6 @@ public class GuiClient extends Application {
         backBtn.setOnAction(e -> {
             // 서버에 퇴장 요청
             clientConnection.send(new Message("SERVER", "LEAVE_ROOM:" + username));
-            
-            // 히스토리 초기화 후 갱신 요청
-            // clientConnection.send(new Message("SERVER", "GET_HISTORY:" + currentUsername));
-
-
             // 로비 화면으로 전환 (최우선으로 실행)
             Platform.runLater(() -> {
                 primaryStage.setScene(lobbyScene);
@@ -800,8 +758,6 @@ public class GuiClient extends Application {
         if (!pendingPlayerList.isEmpty()) {
             playerListView.setItems(javafx.collections.FXCollections.observableArrayList(pendingPlayerList));
         }
-        // Button startbt = new Button("Start");
-        // Button resetbt = new Button("Reset");
 
         if(pendingPlayerList.size()==2){
             startbt.setDisable(false);
@@ -810,10 +766,6 @@ public class GuiClient extends Application {
         // boolean[] gameStarted = {false}; // is the game started? it mightbe not
 
         startbt.setOnAction(e -> {
-            // gameStarted[0] = true;
-            // startbt.setDisable(true); // disable startbt while playing game
-            // resetbt.setDisable(false); // reset bt activated
-            // turnLabel.setText("Turn: Player 1 (Red)");
 
             if (playerListView.getItems().size() == 2) {  // 플레이어 2명일 때만
                 clientConnection.send(new Message("SERVER", "START_GAME:" + roomCode));
@@ -867,8 +819,13 @@ public class GuiClient extends Application {
             playerTurn[0] = true;
         });
 
-        HBox hbox333 = new HBox(20, startbt, resetbt);
-        hbox333.setPadding(new Insets(0,0,0,20));
+        chatbt.setOnAction(e->{
+            previousScene = primaryStage.getScene(); // 👈 현재 화면 저장
+            primaryStage.setScene(chatScene); 
+        });
+
+        HBox hbox333 = new HBox(10, startbt, resetbt, chatbt);
+        hbox333.setPadding(new Insets(0,0,0,5));
 
         Label textN = new Label("Click Start, if u ready!!");
         textN.setPadding(new Insets(0,0,0,5));
@@ -876,7 +833,7 @@ public class GuiClient extends Application {
         VBox playerStats = new VBox(15, p1Label, p1Stats, p2Label, p2Stats, playerListView, hbox333, textN);
         playerStats.setPadding(new Insets(20));
         playerStats.setStyle("-fx-background-color: #FFFFE0; -fx-border-color: black;");
-        playerStats.setPrefWidth(180);
+        playerStats.setPrefWidth(250);
 
         HBox root = new HBox(30, gameArea, playerStats);
         root.setPadding(new Insets(20));
