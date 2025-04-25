@@ -39,5 +39,8 @@ public class GameRoom {
     public boolean hasPlayer(String username) {
         return players.contains(username);
     }
+    public String getPlayerListAsCSV() { // add roommate
+        return String.join(",", players);
+    }
     
 }

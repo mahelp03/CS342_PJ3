@@ -158,10 +158,12 @@ public class GuiClient extends Application {
         chatMessages = new ListView<>();
         c1 = new TextField();
         b1 = new Button("Send");
-        b2 = new Button("Back");
-        b2.setPadding(new Insets(0, 0, 0, 30));
+        b1.setPrefSize(40, 20);
+        b2 = new Button("Back"); 
+        // b2.setPadding(new Insets(0, 0, 0, 30));
+        HBox t7 = new HBox(5, b1, b2);
     
-        fields = new HBox(10, recipientComboBox, c1, b1, b2);
+        fields = new HBox(10, recipientComboBox, c1, t7);
         fields.setPadding(new Insets(5));
         chatMessages = new ListView<>();
     
@@ -211,6 +213,7 @@ public class GuiClient extends Application {
         profileBox.setStyle("-fx-border-color: blue; -fx-padding: 10");
 
         Button createRoom = new Button("Create Room");
+        createRoom.setPrefSize(100, 10);
 
         createRoom.setOnAction(e -> {
             Scene createRoomScene = buildCreateRoomScene(username);
@@ -218,6 +221,7 @@ public class GuiClient extends Application {
         });
         
         Button joinRoom = new Button("Join");
+        joinRoom.setPrefSize(100, 10);
 
         joinRoom.setOnAction(e -> {
             Scene joinRoomScene = buildJoinRoomScene(username);
@@ -448,8 +452,6 @@ public class GuiClient extends Application {
                                     }
                                 });
                             }
-                            
-                            
 
                             else if (data.message.equals("JOIN_FAIL")) {
                                 showErrorMessage("Join Failed: Invalid or full room.");
@@ -473,6 +475,15 @@ public class GuiClient extends Application {
                                     });
                                 }
                             }
+                            else if (data.message.startsWith("TEMPFRIENDLIST:")) {
+                                String[] tempFriends = data.message.substring("TEMPFRIENDLIST:".length()).split(",");
+                                Platform.runLater(() -> {
+                                    FriendList.getItems().clear(); // clear when player leave
+                                    FriendList.getItems().addAll(tempFriends);
+                                });
+                            }
+                            
+
                             else if (data.message.equals("ADDFRIEND_SUCCESS")) {
                                 if (AFresultLabel != null)
                                     AFresultLabel.setText("User is added");
@@ -744,7 +755,6 @@ public class GuiClient extends Application {
                 startbt.setDisable(true);
                 resetbt.setDisable(false);
 
-                // 추가
                 for (int row = 0; row < rows; row++) {
                     for (int col = 0; col < cols; col++) {
                         if (board[row][col] == 0) {

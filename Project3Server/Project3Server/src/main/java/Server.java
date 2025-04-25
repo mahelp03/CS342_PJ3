@@ -290,6 +290,16 @@ public class Server {
                             // send every player on same room
                             for (ClientThread t : clients) {
                                 if (t.username != null && players.contains(t.username)) {
+                                    StringBuilder tempFriendList = new StringBuilder("TEMPFRIENDLIST:");
+                                    for (String p : players) {
+                                        if (!p.equals(t.username)) {
+                                            tempFriendList.append(p).append(",");
+                                        }
+                                    }
+                                    // Remove
+                                    if (tempFriendList.length() > 16 && tempFriendList.charAt(tempFriendList.length() - 1) == ',') {
+                                        tempFriendList.deleteCharAt(tempFriendList.length() - 1);
+                                    }
                                     t.out.writeObject(new Message(t.username, playerListMsg.toString()));
                                 }
                             }
