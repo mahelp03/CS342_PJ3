@@ -133,7 +133,8 @@ public class GuiClient extends Application {
         });
         ImageView logo;
         try {
-            Image img = new Image(getClass().getResourceAsStream("/Connect4.png"));
+            Image img = new Image(getClass().getResourceAsStream("/connect4.png"), 80, 0, true, true);
+
             logo = new ImageView(img);
             logo.setFitWidth(80);
             logo.setPreserveRatio(true);
