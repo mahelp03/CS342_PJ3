@@ -47,10 +47,8 @@ public class GuiServer extends Application {
         serverConnection = new Server(data -> {
 
             String displayName = data.senderName != null ? data.senderName : data.recipient;
-            // if (listItems == null || listUsers == null) return;
             switch (data.type) {
                 case TEXT:
-                    // listItems.getItems().add(displayName);
                     break;
                 case NEWUSER:
                     listUsers.getItems().add(String.valueOf(data.recipient));
@@ -117,13 +115,13 @@ public class GuiServer extends Application {
         Label label = new Label("Registered Accounts");
         label.setFont(Font.font("Serif", 18));
     
-        // ✅ 두 개의 ListView: 하나는 유저명, 하나는 비밀번호
+        // Four Listview username, password, rate, total
         ListView<String> usernameList = new ListView<>();
         ListView<String> passwordList = new ListView<>();
         ListView<String> winRateList = new ListView<>();
         ListView<String> totalGameList = new ListView<>();
     
-        // 🔁 갱신 함수
+        // refressh
         Runnable refreshAccounts = () -> {
             usernameList.getItems().clear();
             passwordList.getItems().clear();
@@ -139,10 +137,10 @@ public class GuiServer extends Application {
             }
         };
     
-        // 초기 로딩
+        // iternal refresh loading
         refreshAccounts.run();
     
-        // 🔘 레이아웃 구성
+        // Frame
         Label usernameLabel = new Label("Username");
         Label passwordLabel = new Label("Password");
         Label winRateLabel = new Label("WinRate");
@@ -157,7 +155,6 @@ public class GuiServer extends Application {
         listsBox.setAlignment(Pos.CENTER);
         listsBox.setPadding(new Insets(10));
     
-        // ⏪ 버튼
         Button backBtn = new Button("Back to Main");
         backBtn.setOnAction(e -> primaryStage.setScene(mainScene));
     
@@ -177,38 +174,9 @@ public class GuiServer extends Application {
     
         return new Scene(pane, 600, 400);
     }
-    
-    
-    // private Scene createAccountScene() {
-    //     Label label = new Label("Registered Accounts");
-    //     label.setFont(Font.font("Serif", 18));
-
-    //     accountTable = new TableView<>();
-    //     TableColumn<Map.Entry<String, String>, String> usernameCol = new TableColumn<>("Username");
-    //     usernameCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getKey()));
-    //     TableColumn<Map.Entry<String, String>, String> passwordCol = new TableColumn<>("Password");
-    //     passwordCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getValue()));
-
-    //     accountTable.getColumns().add(usernameCol);
-    //     accountTable.getColumns().add(passwordCol);
-
-    //     Button backBtn = new Button("Back to Main");
-    //     backBtn.setOnAction(e -> primaryStage.setScene(mainScene));
-
-    //     VBox layout = new VBox(15, label, accountTable, backBtn);
-    //     layout.setAlignment(Pos.CENTER);
-    //     layout.setPadding(new Insets(20));
-
-    //     BorderPane pane = new BorderPane();
-    //     pane.setStyle("-fx-background-color: lightblue; -fx-font-family: 'serif';");
-    //     pane.setCenter(layout);
-
-    //     return new Scene(pane, 600, 400);
-    // }
-    
 
 
-    private void refreshAccountTable() {
+    private void refreshAccountTable() { // refresh
         if (accountTable != null) {
             accountTable.getItems().clear();
             accountTable.getItems().addAll(LoginHandler.getAllUsers().entrySet());

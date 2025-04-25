@@ -48,11 +48,8 @@ public class GuiClient extends Application {
     private Label p1Stats;
     private Label p2Label;
     private Label p2Stats;
-
     private String player1Name;
     private String player2Name;
-
-
     private int rows = 6;
     private int cols = 7;
     private int[][] board;
@@ -66,7 +63,6 @@ public class GuiClient extends Application {
     private boolean[] gameStarted = {false};
     private ListView<String> historyList;
 
-    // 추가
     private Scene gameScene;
     private ListView<String> gameChatList;
     private ComboBox<String> recipientComboBox;
@@ -75,7 +71,6 @@ public class GuiClient extends Application {
     ListView<String> chatMessages; // new chat for player
 
 
-    
 
     // each scenes
     Stage primaryStage;
@@ -98,7 +93,6 @@ public class GuiClient extends Application {
 
         this.loginScene = buildLoginScene();
         this.chatScene = buildChatScene();
-        // this.lobbyScene = buildLobbyScene();
 
         primaryStage.setScene(loginScene);
         primaryStage.show();
@@ -108,10 +102,8 @@ public class GuiClient extends Application {
         });
     }
 
+    // Login scene
     private Scene buildLoginScene() {
-        
-        
-
         Label title = new Label("Login");
         usernameField = new TextField();
         usernameField.setPromptText("Enter username");
@@ -151,7 +143,6 @@ public class GuiClient extends Application {
         HBox t1 = new HBox(220, t0, logo);
         VBox t2 = new VBox(50,signupButton, t1 );
         
-        //loginBox.getChildren().addAll(title, usernameField, passwordField, agreeCheck, loginButton, signupButton);
         VBox loginBox = new VBox(15, title, usernameField, passwordField, agreeCheck, loginButton, t2);
         loginBox.setPadding(new Insets(50));
         loginBox.setStyle("-fx-background-color: #FFFFC5;");
@@ -159,7 +150,7 @@ public class GuiClient extends Application {
         return new Scene(loginBox, 400, 400);
     }
 
-    private Scene buildChatScene() { // 로그인 화면 대신 사용중
+    private Scene buildChatScene() { // chat scene
         recipientComboBox = new ComboBox<>();
         recipientComboBox.getItems().add("ALL");
         recipientComboBox.setValue("ALL");
@@ -208,7 +199,7 @@ public class GuiClient extends Application {
         leftPane.setStyle("-fx-background-color: #FFFFC5;");
 
         Label userLabel = new Label("UserName: " + username);
-        ratingLabel = new Label("Rating: "); // 초기화 안해주면 조댐댐
+        ratingLabel = new Label("Rating: "); // reset
         gamesLabel = new Label("Games: ");
 
         clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + username));
@@ -259,9 +250,6 @@ public class GuiClient extends Application {
         FriendList.setPrefWidth(100);
         HBox hbox1 = new HBox(10, addFriend, textMessage);
         VBox vbox1 = new VBox(10, hbox1, FriendList);
-        
-
-        // rightPane.getChildren().addAll(addFriend, textMessage, friendList);
 
         HBox mainLayout = new HBox(20, leftPane, vbox1 );
         mainLayout.setPadding(new Insets(20));
@@ -270,9 +258,6 @@ public class GuiClient extends Application {
     }
 
     private Scene buildAddFriendScene(String currentUser) {
-        // VBox layout = new VBox(15);
-        // layout.setPadding(new Insets(30));
-        // layout.setStyle("-fx-background-color: #F5F5DC;");
         AFresultLabel = new Label(); 
     
         TextField friendInput = new TextField();
@@ -306,7 +291,7 @@ public class GuiClient extends Application {
         Platform.runLater(() -> {
             VBox loginBox = (VBox) loginScene.getRoot();
             if (!loginBox.getChildren().contains(errorLabel)) {
-                loginBox.getChildren().add(errorLabel); // 로그인 창 제일 아래에 띄움
+                loginBox.getChildren().add(errorLabel);
             }
         });
     }
@@ -324,11 +309,12 @@ public class GuiClient extends Application {
                     
                                 clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
                                 clientConnection.send(new Message("SERVER", "GET_HISTORY:" + username));
+                                
                                 Platform.runLater(() -> {
                                     primaryStage.setScene(lobbyScene);
                                     primaryStage.setTitle("Game Lobby");
                                 });
-                                return; // ✅ 여기도 return 추가
+                                return;
                             }
                             else if (data.message.equals("LOGIN_FAIL") || data.message.equals("SIGNUP_FAIL")) {
                                 showErrorMessage("Login Failed");
@@ -338,12 +324,6 @@ public class GuiClient extends Application {
                                     e.printStackTrace();
                                 }
                             }
-                            // else if(data.message.equals("ADDFRIEND_SUCCESS")){
-                            //     if (AFresultLabel != null)
-                            //         AFresultLabel.setText("User is added");
-                            //     String username = usernameField.getText();
-                            //     clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
-                            // }
                             if (data.message.equals("ADDFRIEND_SUCCESS")) {
                                 if (AFresultLabel != null)
                                     AFresultLabel.setText("User is added");
@@ -357,7 +337,6 @@ public class GuiClient extends Application {
                                 return;
                             }
                             else {
-                                // listItems.getItems().add(data.recipient + ": " + data.message);
                                 chatMessages.getItems().add(data.recipient + ": " + data.message);
                             }
 
@@ -383,20 +362,20 @@ public class GuiClient extends Application {
                                     String player1 = parts[3];
                                     String player2 = parts[5];
                             
-                                    // 🔑 저장
+                                    // save
                                     player1Name = player1;
                                     player2Name = player2;
                             
                                     System.out.println("[DEBUG] player1Name = " + player1Name);
                                     System.out.println("[DEBUG] player2Name = " + player2Name);
                             
-                                    // 🔁 UI 스레드에서 화면 전환
+                                    // UI Thread change
                                     Platform.runLater(() -> {
                                         System.out.println("[DEBUG] Switching to game scene...");
                                         primaryStage.setScene(buildGameScene(roomName, usernameField.getText(), roomCode));
                                     });
                             
-                                    // 요청
+                                    // request
                                     clientConnection.send(new Message("SERVER", "GET_PLAYERLIST:" + roomCode));
                                     clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player1));
                                     clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player2));
@@ -430,7 +409,7 @@ public class GuiClient extends Application {
                                 Platform.runLater(() -> {
                                     if (!entry.isEmpty() && !historyList.getItems().contains(entry)) {
                                         if (historyList.getItems().size() >= 6) {
-                                            historyList.getItems().remove(1); // 첫 줄은 "Recent Game History" 라면
+                                            historyList.getItems().remove(1); // "Recent Game History" in the first line
                                         }
                                         historyList.getItems().add(entry);
                                     }
@@ -440,7 +419,7 @@ public class GuiClient extends Application {
                             
 
                             else if (data.message.startsWith("PROFILE_INFO:")) {
-                                System.out.println("[DEBUG] Received PROFILE_INFO: " + data.message);  // 콘솔 확인용
+                                System.out.println("[DEBUG] Received PROFILE_INFO: " + data.message);  // console check
 
                                 String[] parts = data.message.split(":");
                                 String targetUser = parts[1];
@@ -478,7 +457,11 @@ public class GuiClient extends Application {
                             else if (data.message.startsWith("FRIENDLIST:")) {
                                 String[] parts = data.message.split(":");
                                 if (parts.length == 3) {
+                                    
                                     String[] friends = parts[2].split(",");
+
+                                    System.out.println("Received FRIENDLIST message: " + data.message);
+                                    System.out.println("Friends list: " + String.join(", ", friends));
                                     FriendList.getItems().setAll(friends);
                             
                                     Platform.runLater(() -> {
@@ -512,7 +495,7 @@ public class GuiClient extends Application {
                                         if (p2Stats != null) p2Stats.setText("Rating: N/A\nGames: N/A");
                                     }
                             
-                                    // 🔥 드롭다운 갱신
+                                    // reload dropdown
                                     recipientComboBox.getItems().clear();
                                     recipientComboBox.getItems().add("ALL");
                                     for (String player : players) {
@@ -529,13 +512,13 @@ public class GuiClient extends Application {
                                 if (AFresultLabel != null)
                                     AFresultLabel.setText("User not found or already added.");
                             }
-                            // else {
-                            //     listItems.getItems().add(data.recipient + ": " + data.message);
-                            // }
+                            
 
                             String sender = data.senderName != null ? data.senderName : data.recipient;
                             String formattedMsg = "From "+sender + ": " + data.message;
-                            if (sender.equals(currentUsername)) return; // 내가 보낸 거면 스킵
+                            if (sender.equals(currentUsername)){
+                                return;
+                            }
 
                             if (!chatMessages.getItems().contains(formattedMsg)) {
                                 chatMessages.getItems().add(formattedMsg);
@@ -547,8 +530,6 @@ public class GuiClient extends Application {
         
                     case NEWUSER:
                         Platform.runLater(() -> {
-                            // chatMessages.getItems().add(data.recipient);
-                            // chatMessages.getItems().add(data.recipient );
                             chatMessages.getItems().add("Player " + data.recipient + " joined.");
 
                         });
@@ -556,7 +537,7 @@ public class GuiClient extends Application {
         
                     case DISCONNECT:
                         Platform.runLater(() -> {
-                            chatMessages.getItems().remove(data.recipient); // 로그아웃시 좌측화면에서 접속자 지움움
+                            chatMessages.getItems().remove(data.recipient); // refresh online players
                             chatMessages.getItems().add(data.recipient);
                             
                         });
@@ -567,8 +548,8 @@ public class GuiClient extends Application {
                             String winRate = parts[0];
                             String totalGames = parts[1];
 
-                            System.out.println("[DEBUG] Received updated stats for: " + data.recipient);
-                            System.out.println("[DEBUG] winRate = " + winRate + ", totalGames = " + totalGames);
+                            System.out.println("Received updated stats for: " + data.recipient);
+                            System.out.println("winRate = " + winRate + ", totalGames = " + totalGames);
 
                     
                             if (data.recipient.equals(player1Name)) {
@@ -616,13 +597,10 @@ public class GuiClient extends Application {
         Button enterButton = new Button("Enter");
         Button backButton = new Button("Back");
         
-        // 전꺼
         enterButton.setOnAction(e -> {
             String roomName = roomInput.getText().trim();
             if (!roomName.isEmpty()) {
                 clientConnection.send(new Message("SERVER", "CREATE_ROOM:" + username + ":" + roomName));
-                // Placeholder: Replace with actual in-game room logic
-                // primaryStage.setScene(buildGameScene(roomName, username));
             }
         });     
     
@@ -636,7 +614,7 @@ public class GuiClient extends Application {
         return new Scene(layout, 400, 300, Color.web("#FFFFC5"));
     }
     
-    // 커넥트4 ui빌드
+    // connect4 building --> here
     private Scene buildGameScene(String roomName, String username, String roomCode) {
         Label header = new Label("Room: " + roomName + " | Code: " + roomCode);
         header.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
@@ -691,9 +669,9 @@ public class GuiClient extends Application {
 
         Button backBtn = new Button("Exit Room");
         backBtn.setOnAction(e -> {
-            // 서버에 퇴장 요청
+            // quit room requeset
             clientConnection.send(new Message("SERVER", "LEAVE_ROOM:" + username));
-            // 로비 화면으로 전환 (최우선으로 실행)
+            // go to lobby
             Platform.runLater(() -> {
                 primaryStage.setScene(lobbyScene);
                 primaryStage.setTitle("Game Lobby");
@@ -711,17 +689,16 @@ public class GuiClient extends Application {
         p2Label = new Label("Player 2 (" + player2Name + ")");
         p2Stats = new Label("Rating: N/A\nGames: N/A");
 
-        Message latestMsg = lastRoomMessage; // buildGameScene() 호출 직전에 저장해두는 구조
+        Message latestMsg = lastRoomMessage; // buildGameScene() save before call
 
         if (latestMsg != null && latestMsg.message.startsWith("ROOM_CREATED:")) {
             String[] parts = latestMsg.message.split(":");
             String creator = parts[3];
             String[] stats = parts[4].split(",");
 
-            player1Name = creator;  // 🔥 여기에 저장
+            player1Name = creator;  // <- save
             player2Name = null;
 
-            // p1Label.setText(creator);
             p1Label = new Label("Player 1 ( " + creator + " )");
             p1Stats.setText("Rating: " + stats[0] + " %\nGames: " + stats[1]);
 
@@ -738,9 +715,6 @@ public class GuiClient extends Application {
                 player1Name = player1;
                 player2Name = player2;
 
-
-                // p1Label.setText(player1);
-                // p2Label.setText(player2);
                 p1Label = new Label("Player 1 ( " + player1Name + " )");
                 p2Label = new Label("Player 2 ( " + player2Name + " )");
                 p1Stats.setText("Rating: " + stats1[0] + " %\nGames: " + stats1[1]);
@@ -767,7 +741,7 @@ public class GuiClient extends Application {
 
         startbt.setOnAction(e -> {
 
-            if (playerListView.getItems().size() == 2) {  // 플레이어 2명일 때만
+            if (playerListView.getItems().size() == 2) {  // just for when num of player ==2
                 clientConnection.send(new Message("SERVER", "START_GAME:" + roomCode));
                 gameStarted[0] = true;
                 startbt.setDisable(true);
@@ -804,7 +778,7 @@ public class GuiClient extends Application {
             gameStarted[0] = false;
             gameOver[0] = false;
             resetbt.setDisable(true);
-            startbt.setDisable(false); // start 락풀기
+            startbt.setDisable(false); // start , then solve board lock
             turnLabel.setText("Game reset. Press Start to begin.");
         
             for (int row = 0; row < rows; row++) {
@@ -820,7 +794,7 @@ public class GuiClient extends Application {
         });
 
         chatbt.setOnAction(e->{
-            previousScene = primaryStage.getScene(); // 👈 현재 화면 저장
+            previousScene = primaryStage.getScene(); // save where player came from , cur_scene
             primaryStage.setScene(chatScene); 
         });
 
@@ -889,8 +863,7 @@ public class GuiClient extends Application {
         return new Scene(layout, 400, 300, Color.web("#FFFFC5"));
     }
     
-    // 밑에부터 4목 게임 요소들
-    // Helper: Set color on button
+    // connect 4 objects
     private void updateButton(Button[][] buttons, int row, int col, int player) {
         buttons[row][col].setGraphic(new javafx.scene.shape.Circle(18, player == 1 ? javafx.scene.paint.Color.RED : javafx.scene.paint.Color.GOLD));
         buttons[row][col].setStyle("-fx-background-color: white;");
@@ -961,8 +934,6 @@ public class GuiClient extends Application {
             String loser  = (currentPlayer == 1) ? player2Name : player1Name;
             clientConnection.send(new Message("SERVER", "GAME_RESULT:" + winner + ":" + loser));
 
-            // clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + currentUsername));
-            // clientConnection.send(new Message("SERVER", "GET_HISTORY:" + currentUsername));
             clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player1Name));
             clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player2Name));
             clientConnection.send(new Message("SERVER", "GET_HISTORY:" + player1Name));

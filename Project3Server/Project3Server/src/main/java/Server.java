@@ -180,19 +180,19 @@ public class Server {
                             boolean success = FriendHander.addFriend(user, friend);
                     
                             if (success) {
-                                // 친구 추가 성공
+                                // .confirm  whether success or not for adding friend
                                 out.writeObject(new Message(user, "ADDFRIEND_SUCCESS"));
                     
-                                // 친구 리스트 갱신: user 쪽
+                                // refresh friend list : Me
                                 Set<String> userFriends = FriendHander.getFriends(user);
                                 out.writeObject(new Message(user, "FRIENDLIST:" + user + ":" + String.join(",", userFriends)));
                     
-                                // 친구 리스트 갱신: friend 쪽
+                               // refresh friend list : Friend ver
                                 for (ClientThread t : clients) {
                                     if (t.username != null && t.username.equals(friend)) {
                                         Set<String> friendFriends = FriendHander.getFriends(friend);
                                         t.out.writeObject(new Message(friend, "FRIENDLIST:" + friend + ":" + String.join(",", friendFriends)));
-                                        break; // friend 1명 찾으면 끝
+                                        break;
                                     }
                                 }
                     
@@ -205,11 +205,11 @@ public class Server {
                         continue;
                     }
                     
-                    else if (data.message.startsWith("GETFRIEND:")) {
-                        // String user = data.message.substring("GETFRIEND:".length());
-                        // Set<String> friends = FriendHander.getFriends(user);
-                        // String friendStr = String.join(",", friends);
-                        // out.writeObject(new Message(user, "FRIENDLIST:" + user + ":" + friendStr));
+                    else if (data.message.startsWith("GETFRIEND:")) { // when player entered lobby
+                        String user = data.message.substring("GETFRIEND:".length());
+                        Set<String> friends = FriendHander.getFriends(user);
+                        String friendStr = String.join(",", friends);
+                        out.writeObject(new Message(user, "FRIENDLIST:" + user + ":" + friendStr));
                         continue;
                     }
                     
