@@ -18,6 +18,18 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
+<<<<<<< Updated upstream
+=======
+// 변동사항
+import javafx.scene.paint.Color;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
+import javafx.geometry.Pos;
+
+
+
+>>>>>>> Stashed changes
 public class GuiClient extends Application {
 
     TextField c1;
@@ -29,6 +41,40 @@ public class GuiClient extends Application {
     HBox fields;
     ComboBox<String> listUsers;
     ListView<String> listItems, FriendList;
+<<<<<<< Updated upstream
+=======
+    private Message lastRoomMessage;
+    private String currentUsername;
+    private ListView<String> playerListView;
+    private java.util.List<String> pendingPlayerList = new java.util.ArrayList<>();
+    private Label p1Label;
+    private Label p1Stats;
+    private Label p2Label;
+    private Label p2Stats;
+
+    private String player1Name;
+    private String player2Name;
+
+
+    private int rows = 6;
+    private int cols = 7;
+    private int[][] board;
+    private Button[][] buttons;
+    private boolean[] playerTurn;
+    private boolean[] gameOver;
+    private Label turnLabel;
+    Button startbt = new Button("Start");
+    Button resetbt = new Button("Reset");
+    private boolean[] gameStarted = {false};
+    private ListView<String> historyList;
+
+    // 변동사항
+    private Scene gameScene;
+    private ListView<String> gameChatList;
+
+
+
+>>>>>>> Stashed changes
     
 
     // each scenes
@@ -65,7 +111,7 @@ public class GuiClient extends Application {
     private Scene buildLoginScene() {
         VBox loginBox = new VBox(15);
         loginBox.setPadding(new Insets(50));
-        loginBox.setStyle("-fx-background-color: lightblue;");
+        loginBox.setStyle("-fx-background-color: #FFFFC5;");
 
         Label title = new Label("Login");
         usernameField = new TextField();
@@ -93,8 +139,23 @@ public class GuiClient extends Application {
             setupConnection();
         });
         
+        ImageView logo;
+        try {
+            Image img = new Image(getClass().getResourceAsStream("/Connect4.png"));
+            logo = new ImageView(img);
+            logo.setFitWidth(80);
+            logo.setPreserveRatio(true);
+            
+        } catch (Exception ex) {
+            logo = new ImageView();  // fallback empty
+        }
+        Label t2 = new Label("");
+        HBox t1 = new HBox(250, t2, logo);
+        VBox t3 = new VBox(100, signupButton, t1);
 
-        loginBox.getChildren().addAll(title, usernameField, passwordField, agreeCheck, loginButton, signupButton);
+        // loginBox.getChildren().addAll(title, usernameField, passwordField, agreeCheck, loginButton, signupButton);
+        loginBox = new VBox(10,title, usernameField, passwordField, agreeCheck, loginButton, t3);
+        loginBox.setPadding(new Insets(20,40,10,40));
         return new Scene(loginBox, 400, 400);
     }
 
@@ -124,9 +185,9 @@ public class GuiClient extends Application {
 
         clientBox = new VBox(10, c1, fields, listItems);
         clientBox.setPadding(new Insets(10));
-        clientBox.setStyle("-fx-background-color: blue; -fx-font-family: 'serif';");
+        clientBox.setStyle("-fx-background-color: #FFFFC5; -fx-font-family: 'serif';");
 
-        return new Scene(clientBox, 400, 300);
+        return new Scene(clientBox, 400, 300, Color.web("#FFFFC5"));
     }
 
     // lobby
@@ -139,7 +200,7 @@ public class GuiClient extends Application {
 
         VBox leftPane = new VBox(10);
         leftPane.setPadding(new Insets(10));
-        leftPane.setStyle("-fx-background-color: #E6E6FA;");
+        leftPane.setStyle("-fx-background-color: #FFFFC5;");
 
         Label userLabel = new Label("UserName: " + username);
         ratingLabel = new Label("Rating: "); // 초기화 안해주면 조댐댐
@@ -182,13 +243,10 @@ public class GuiClient extends Application {
         HBox mainLayout = new HBox(20, leftPane, vbox1 );
         mainLayout.setPadding(new Insets(20));
 
-        return new Scene(mainLayout, 600, 400);
+        return new Scene(mainLayout, 600, 400, Color.web("#FFFFC5"));
     }
 
     private Scene buildAddFriendScene(String currentUser) {
-        // VBox layout = new VBox(15);
-        // layout.setPadding(new Insets(30));
-        // layout.setStyle("-fx-background-color: #F5F5DC;");
         AFresultLabel = new Label(); 
     
         TextField friendInput = new TextField();
@@ -212,7 +270,7 @@ public class GuiClient extends Application {
         HBox hboxaddf = new HBox(15, friendInput, goButton, backButton);
         VBox vboxaddf  = new VBox(10, hboxaddf, AFresultLabel);
         hboxaddf.setPadding(new Insets(20,5,20,5));
-        return new Scene(vboxaddf, 400, 300);
+        return new Scene(vboxaddf, 400, 300, Color.web("#FFFFC5"));
     }
 
 
@@ -335,4 +393,407 @@ public class GuiClient extends Application {
     }
     
     
+<<<<<<< Updated upstream
+=======
+    private Scene buildCreateRoomScene(String username) {
+        VBox layout = new VBox(15);
+        layout.setPadding(new Insets(40));
+        layout.setStyle("-fx-background-color: #FFFFC5;");
+    
+        Label label = new Label("Enter Room Name:");
+        TextField roomInput = new TextField();
+        roomInput.setPromptText("Room Name");
+    
+        Button enterButton = new Button("Enter");
+        Button backButton = new Button("Back");
+        
+        // 전꺼
+        enterButton.setOnAction(e -> {
+            String roomName = roomInput.getText().trim();
+            if (!roomName.isEmpty()) {
+                clientConnection.send(new Message("SERVER", "CREATE_ROOM:" + username + ":" + roomName));
+                // Placeholder: Replace with actual in-game room logic
+                // primaryStage.setScene(buildGameScene(roomName, username));
+            }
+        });     
+    
+        backButton.setOnAction(e -> {
+            primaryStage.setScene(lobbyScene);
+        });
+    
+        HBox buttonRow = new HBox(15, enterButton, backButton);
+        layout.getChildren().addAll(label, roomInput, buttonRow);
+    
+        return new Scene(layout, 400, 300, Color.web("#FFFFC5"));
+    }
+    
+    // 커넥트4 ui빌드
+    private Scene buildGameScene(String roomName, String username, String roomCode) {
+        Label header = new Label("Room: " + roomName + " | Code: " + roomCode);
+        header.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+
+        // final int rows = 6;
+        // final int cols = 7;
+        // int[][] board = new int[rows][cols]; // 0=empty, 1=red, 2=yellow
+        // boolean[] playerTurn = {true}; // Player 1: true, Player 2: false
+        // Button[][] buttons = new Button[rows][cols];
+        // boolean[] gameOver = {false};
+        // Label turnLabel = new Label("Turn: Player 1 (Red)");
+
+        GridPane gameBoard = new GridPane();
+        gameBoard.setPadding(new Insets(10));
+        gameBoard.setHgap(5);
+        gameBoard.setVgap(5);
+
+        board = new int[rows][cols];
+        buttons = new Button[rows][cols];
+        playerTurn = new boolean[] {true};
+        gameOver = new boolean[] {false};
+        turnLabel = new Label("Turn: Player 1 (Red)");
+        boolean[] gameStarted = {false};
+
+
+        
+        // Label turnLabel = new Label("Turn: Player 1 (Red)"); // 현재 턴 표시용
+        
+        
+
+        // initialize buttons and board (여기서부턴 안바꿈)
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                Button cell = new Button();
+                cell.setMinSize(50, 50);
+                cell.setMaxSize(50, 50);
+                cell.setStyle("-fx-background-color: #FFFFE0;;");
+
+                int finalCol = col;
+                cell.setOnAction(e -> {
+                    if (gameOver[0] || !gameStarted[0]) return;
+                    boolean isMyTurn = (playerTurn[0] && username.equals(player1Name)) || (!playerTurn[0] && username.equals(player2Name));
+                    if (!isMyTurn) {
+                        System.out.println("[DEBUG] It's not your turn: " + username);
+                        return;
+                    }
+
+                    int dropRow = -1;
+                    for (int r = rows - 1; r >= 0; r--) {
+                        if (board[r][finalCol] == 0) {
+                            dropRow = r;
+                            break;
+                        }
+                    }
+                    if (dropRow == -1) return;
+
+                    clientConnection.send(new Message("SERVER", "MOVE:" + roomCode + ":" + username + ":" + finalCol));
+                    
+                });
+                gameBoard.add(cell, col, row);
+                buttons[row][col] = cell;
+            }
+        }
+
+        Button backBtn = new Button("Exit Room");
+        backBtn.setOnAction(e -> {
+            // 서버에 퇴장 요청
+            clientConnection.send(new Message("SERVER", "LEAVE_ROOM:" + username));
+            
+            // 히스토리 초기화 후 갱신 요청
+            clientConnection.send(new Message("SERVER", "GET_HISTORY:" + currentUsername));
+
+
+            // 로비 화면으로 전환 (최우선으로 실행)
+            Platform.runLater(() -> {
+                primaryStage.setScene(lobbyScene);
+                primaryStage.setTitle("Game Lobby");
+            });
+        });
+
+
+        VBox gameArea = new VBox(10, header, turnLabel, gameBoard, backBtn);
+        gameArea.setPadding(new Insets(10));
+
+        // Player Info Area
+        p1Label = new Label("Player 1 (" + player1Name + ")");
+        p1Stats = new Label("Rating: N/A\nGames: N/A");
+
+        p2Label = new Label("Player 2 (" + player2Name + ")");
+        p2Stats = new Label("Rating: N/A\nGames: N/A");
+
+        Message latestMsg = lastRoomMessage; // buildGameScene() 호출 직전에 저장해두는 구조
+
+        if (latestMsg != null && latestMsg.message.startsWith("ROOM_CREATED:")) {
+            String[] parts = latestMsg.message.split(":");
+            String creator = parts[3];
+            String[] stats = parts[4].split(",");
+
+            player1Name = creator;  // 🔥 여기에 저장
+            player2Name = null;
+
+            // p1Label.setText(creator);
+            p1Label = new Label("Player 1 ( " + creator + " )");
+            p1Stats.setText("Rating: " + stats[0] + " %\nGames: " + stats[1]);
+
+            clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + creator));
+
+        } else if (latestMsg != null && latestMsg.message.startsWith("JOIN_SUCCESS:")) {
+            String[] parts = latestMsg.message.split(":");
+            if (parts.length >= 8) {
+                String player1 = parts[3];
+                String[] stats1 = parts[4].split(",");
+                String player2 = parts[5];
+                String[] stats2 = parts[6].split(",");
+
+                player1Name = player1;
+                player2Name = player2;
+
+
+                // p1Label.setText(player1);
+                // p2Label.setText(player2);
+                p1Label = new Label("Player 1 ( " + player1Name + " )");
+                p2Label = new Label("Player 2 ( " + player2Name + " )");
+                p1Stats.setText("Rating: " + stats1[0] + " %\nGames: " + stats1[1]);
+                
+                p2Stats.setText("Rating: " + stats2[0] + " %\nGames: " + stats2[1]);
+
+                clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player1));
+                clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player2));
+            }
+        }
+        playerListView = new ListView<>();
+        playerListView.setPrefHeight(80);
+        playerListView.setPlaceholder(new Label("Waiting for players..."));
+
+        if (!pendingPlayerList.isEmpty()) {
+            playerListView.setItems(javafx.collections.FXCollections.observableArrayList(pendingPlayerList));
+        }
+        // Button startbt = new Button("Start");
+        // Button resetbt = new Button("Reset");
+
+        if(pendingPlayerList.size()==2){
+            startbt.setDisable(false);
+        }
+
+        // boolean[] gameStarted = {false}; // is the game started? it mightbe not
+
+        startbt.setOnAction(e -> {
+            // gameStarted[0] = true;
+            // startbt.setDisable(true); // disable startbt while playing game
+            // resetbt.setDisable(false); // reset bt activated
+            // turnLabel.setText("Turn: Player 1 (Red)");
+
+            if (playerListView.getItems().size() == 2) {  // 플레이어 2명일 때만
+                clientConnection.send(new Message("SERVER", "START_GAME:" + roomCode));
+                gameStarted[0] = true;
+                startbt.setDisable(true);
+                resetbt.setDisable(false);
+
+                // 추가
+                for (int row = 0; row < rows; row++) {
+                    for (int col = 0; col < cols; col++) {
+                        if (board[row][col] == 0) {
+                            buttons[row][col].setDisable(false); // Enable empty cells for a new round
+                        }
+                    }
+                }
+                
+            }
+        
+            for (int row = 0; row < rows; row++) {
+                for (int col = 0; col < cols; col++) {
+                    int finalCol = col;
+                    buttons[row][col].setOnAction(ev -> {
+                        if (!gameStarted[0] || gameOver[0]) return;
+        
+                        if ((playerTurn[0] && username.equals(player1Name)) ||
+                            (!playerTurn[0] && username.equals(player2Name))) {
+                            clientConnection.send(new Message("SERVER", "MOVE:" + roomCode + ":" + username + ":" + finalCol));
+                        }
+                    });
+                }
+            }
+        });
+
+
+        resetbt.setOnAction(e -> {
+            gameStarted[0] = false;
+            gameOver[0] = false;
+            resetbt.setDisable(true);
+            startbt.setDisable(false); // start 락풀기
+            turnLabel.setText("Game reset. Press Start to begin.");
+        
+            for (int row = 0; row < rows; row++) {
+                for (int col = 0; col < cols; col++) {
+                    board[row][col] = 0;
+                    buttons[row][col].setGraphic(null);
+                    buttons[row][col].setStyle("-fx-background-color: #FFFFC5;");
+                    buttons[row][col].setDisable(true);
+                }
+            }
+        
+            playerTurn[0] = true;
+        });
+
+        HBox hbox333 = new HBox(20, startbt, resetbt);
+        hbox333.setPadding(new Insets(0,0,0,20));
+
+        Label textN = new Label("Get Ready, For Get Start!");
+        textN.setPadding(new Insets(0,0,0,5));
+
+        VBox playerStats = new VBox(15, p1Label, p1Stats, p2Label, p2Stats, playerListView, hbox333, textN);
+        playerStats.setPadding(new Insets(20));
+        playerStats.setStyle("-fx-background-color: #FFFFE0; -fx-border-color: black;");
+        playerStats.setPrefWidth(180);
+
+        HBox root = new HBox(30, gameArea, playerStats);
+        root.setPadding(new Insets(20));
+
+        return new Scene(root, 700, 550, Color.web("#FFFFC5"));
+    }
+
+
+
+
+    private Scene buildJoinRoomScene(String username) {
+        VBox layout = new VBox(15);
+        layout.setPadding(new Insets(30));
+        layout.setStyle("-fx-background-color: #FFFFC5;");
+    
+        Label label = new Label("Join Game Room");
+        TextField roomCodeField = new TextField();
+        roomCodeField.setPromptText("Enter Room Code (e.g. R5S89X)");
+    
+        Button enterBtn = new Button("Enter");
+        enterBtn.setOnAction(e -> {
+            String code = roomCodeField.getText().trim().toUpperCase();
+            if (!code.isEmpty()) {
+                clientConnection.send(new Message("SERVER", "JOIN_ROOM:" + username + ":" + code));
+            }
+        });
+
+        Button randomBtn = new Button("Random Join");
+        randomBtn.setOnAction(e -> {
+            clientConnection.send(new Message("SERVER", "JOIN_RANDOM_REQUEST:" + username));
+        });
+        Button backBtn = new Button("Back");
+
+        enterBtn.setOnAction(e -> {
+            String code = roomCodeField.getText().trim().toUpperCase();
+            if (!code.isEmpty()) {
+                clientConnection.send(new Message("SERVER", "JOIN_ROOM:" + username + ":" + code));
+            }
+        });
+        
+        randomBtn.setOnAction(e -> {
+            clientConnection.send(new Message("SERVER", "JOIN_RANDOM_REQUEST:" + username));
+        });
+        
+    
+        backBtn.setOnAction(e -> {
+            primaryStage.setScene(lobbyScene);
+        });
+    
+        VBox buttons = new VBox(10, enterBtn, randomBtn, backBtn);
+        layout.getChildren().addAll(label, roomCodeField, buttons);
+    
+        return new Scene(layout, 400, 300, Color.web("#FFFFC5"));
+    }
+    
+    // 밑에부터 4목 게임 요소들
+    // Helper: Set color on button
+    private void updateButton(Button[][] buttons, int row, int col, int player) {
+        buttons[row][col].setGraphic(new javafx.scene.shape.Circle(18, player == 1 ? javafx.scene.paint.Color.RED : javafx.scene.paint.Color.GOLD));
+        buttons[row][col].setStyle("-fx-background-color: white;");
+        buttons[row][col].setDisable(true);
+    }
+
+    // Win checking
+    private boolean checkWin(int[][] board, int row, int col, int player) {
+        int[][] dirs = {{1,0},{0,1},{1,1},{1,-1}};
+        for (int[] d : dirs) {
+            int count = 1;
+            count += countDir(board, row, col, d[0], d[1], player);
+            count += countDir(board, row, col, -d[0], -d[1], player);
+            if (count >= 4) return true;
+        }
+        return false;
+    }
+
+    private int countDir(int[][] board, int row, int col, int dr, int dc, int player) {
+        int count = 0, r = row+dr, c = col+dc;
+        while (r >= 0 && r < board.length && c >= 0 && c < board[0].length && board[r][c] == player) {
+            count++; r += dr; c += dc;
+        }
+        return count;
+    }
+
+    private boolean isDraw(int[][] board) {
+        for (int col = 0; col < board[0].length; col++) {
+            if (board[0][col] == 0) return false;
+        }
+        return true;
+    }
+
+    private void showWinDialog(String msg) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setHeaderText(null);
+            alert.setContentText(msg);
+            alert.setTitle("Game Over");
+            alert.showAndWait();
+        });
+    }
+
+    private void applyMoveToBoard(String mover, int col) {
+        if (gameOver[0]) return;
+    
+        int dropRow = -1;
+        for (int r = rows - 1; r >= 0; r--) {
+            if (board[r][col] == 0) {
+                dropRow = r;
+                break;
+            }
+        }
+        if (dropRow == -1) return;
+    
+        int currentPlayer = mover.equals(player1Name) ? 1 : 2;
+        board[dropRow][col] = currentPlayer;
+        updateButton(buttons, dropRow, col, currentPlayer);
+        buttons[dropRow][col].setDisable(true);
+    
+        if (checkWin(board, dropRow, col, currentPlayer)) {
+            gameOver[0] = true;
+            turnLabel.setText("Player " + currentPlayer + " wins!");
+            showWinDialog("Player " + currentPlayer + " wins!");
+            System.out.println("[DEBUG] Game Over - Winner: " + (currentPlayer == 1 ? player1Name : player2Name));
+            
+            String winner = (currentPlayer == 1) ? player1Name : player2Name;
+            String loser  = (currentPlayer == 1) ? player2Name : player1Name;
+            clientConnection.send(new Message("SERVER", "GAME_RESULT:" + winner + ":" + loser));
+
+            // clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + currentUsername));
+            // clientConnection.send(new Message("SERVER", "GET_HISTORY:" + currentUsername));
+            clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player1Name));
+            clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player2Name));
+            clientConnection.send(new Message("SERVER", "GET_HISTORY:" + player1Name));
+            clientConnection.send(new Message("SERVER", "GET_HISTORY:" + player2Name));
+            return;
+        } else if (isDraw(board)) {
+            gameOver[0] = true;
+            turnLabel.setText("Draw!");
+            showWinDialog("It's a draw!");
+
+            clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player1Name));
+            clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player2Name));
+            clientConnection.send(new Message("SERVER", "GET_HISTORY:" + player1Name));
+            clientConnection.send(new Message("SERVER", "GET_HISTORY:" + player2Name));
+
+        } else {
+            playerTurn[0] = !playerTurn[0];
+            turnLabel.setText("Turn: Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)"));
+        }
+    }
+    
+
+
+>>>>>>> Stashed changes
 }
