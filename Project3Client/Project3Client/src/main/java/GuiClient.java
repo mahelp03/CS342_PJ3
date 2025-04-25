@@ -18,6 +18,14 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import javafx.scene.paint.Color;
+import javafx.scene.image.Image;
+
+import javafx.scene.image.ImageView;
+
+import javafx.scene.layout.StackPane;
+
+import javafx.geometry.Pos;
 
 
 
@@ -57,7 +65,9 @@ public class GuiClient extends Application {
     private boolean[] gameStarted = {false};
     private ListView<String> historyList;
 
-
+    // 추가
+    private Scene gameScene;
+    private ListView<String> gameChatList;
 
     
 
@@ -93,9 +103,8 @@ public class GuiClient extends Application {
     }
 
     private Scene buildLoginScene() {
-        VBox loginBox = new VBox(15);
-        loginBox.setPadding(new Insets(50));
-        loginBox.setStyle("-fx-background-color: lightblue;");
+        
+        
 
         Label title = new Label("Login");
         usernameField = new TextField();
@@ -122,9 +131,24 @@ public class GuiClient extends Application {
             isSignUp = true;
             setupConnection();
         });
+        ImageView logo;
+        try {
+            Image img = new Image(getClass().getResourceAsStream("/Connect4.png"));
+            logo = new ImageView(img);
+            logo.setFitWidth(80);
+            logo.setPreserveRatio(true);
+        } catch (Exception ex) {
+            logo = new ImageView();  // fallback empty
+        }
+        Label t0 = new Label("");
+        HBox t1 = new HBox(220, t0, logo);
+        VBox t2 = new VBox(50,signupButton, t1 );
         
-
-        loginBox.getChildren().addAll(title, usernameField, passwordField, agreeCheck, loginButton, signupButton);
+        //loginBox.getChildren().addAll(title, usernameField, passwordField, agreeCheck, loginButton, signupButton);
+        VBox loginBox = new VBox(15, title, usernameField, passwordField, agreeCheck, loginButton, t2);
+        loginBox.setPadding(new Insets(50));
+        loginBox.setStyle("-fx-background-color: #FFFFC5;");
+        
         return new Scene(loginBox, 400, 400);
     }
 
@@ -154,9 +178,9 @@ public class GuiClient extends Application {
 
         clientBox = new VBox(10, c1, fields, listItems);
         clientBox.setPadding(new Insets(10));
-        clientBox.setStyle("-fx-background-color: blue; -fx-font-family: 'serif';");
+        clientBox.setStyle("-fx-background-color: #FFFFC5; -fx-font-family: 'serif';");
 
-        return new Scene(clientBox, 400, 300);
+        return new Scene(clientBox, 400, 300, Color.web("#FFFFC5"));
     }
 
     // lobby
@@ -169,7 +193,7 @@ public class GuiClient extends Application {
 
         VBox leftPane = new VBox(10);
         leftPane.setPadding(new Insets(10));
-        leftPane.setStyle("-fx-background-color: #E6E6FA;");
+        leftPane.setStyle("-fx-background-color: #FFFFC5;");
 
         Label userLabel = new Label("UserName: " + username);
         ratingLabel = new Label("Rating: "); // 초기화 안해주면 조댐댐
@@ -230,7 +254,7 @@ public class GuiClient extends Application {
         HBox mainLayout = new HBox(20, leftPane, vbox1 );
         mainLayout.setPadding(new Insets(20));
 
-        return new Scene(mainLayout, 600, 400);
+        return new Scene(mainLayout, 600, 400, Color.web("#FFFFC5"));
     }
 
     private Scene buildAddFriendScene(String currentUser) {
@@ -260,7 +284,7 @@ public class GuiClient extends Application {
         HBox hboxaddf = new HBox(15, friendInput, goButton, backButton);
         VBox vboxaddf  = new VBox(10, hboxaddf, AFresultLabel);
         hboxaddf.setPadding(new Insets(20,5,20,5));
-        return new Scene(vboxaddf, 400, 300);
+        return new Scene(vboxaddf, 400, 300, Color.web("#FFFFC5"));
     }
 
 
@@ -537,7 +561,7 @@ public class GuiClient extends Application {
     private Scene buildCreateRoomScene(String username) {
         VBox layout = new VBox(15);
         layout.setPadding(new Insets(40));
-        layout.setStyle("-fx-background-color: #FAFAD2;");
+        layout.setStyle("-fx-background-color: #FFFFC5;");
     
         Label label = new Label("Enter Room Name:");
         TextField roomInput = new TextField();
@@ -563,7 +587,7 @@ public class GuiClient extends Application {
         HBox buttonRow = new HBox(15, enterButton, backButton);
         layout.getChildren().addAll(label, roomInput, buttonRow);
     
-        return new Scene(layout, 400, 300);
+        return new Scene(layout, 400, 300, Color.web("#FFFFC5"));
     }
     
     // 커넥트4 ui빌드
@@ -590,10 +614,6 @@ public class GuiClient extends Application {
         gameOver = new boolean[] {false};
         turnLabel = new Label("Turn: Player 1 (Red)");
         boolean[] gameStarted = {false};
-
-
-        
-        // Label turnLabel = new Label("Turn: Player 1 (Red)"); // 현재 턴 표시용
         
         
 
@@ -603,7 +623,7 @@ public class GuiClient extends Application {
                 Button cell = new Button();
                 cell.setMinSize(50, 50);
                 cell.setMaxSize(50, 50);
-                cell.setStyle("-fx-background-color: #e0e0e0;");
+                cell.setStyle("-fx-background-color: #FFFFE0;");
 
                 int finalCol = col;
                 cell.setOnAction(e -> {
@@ -799,7 +819,7 @@ public class GuiClient extends Application {
                 for (int col = 0; col < cols; col++) {
                     board[row][col] = 0;
                     buttons[row][col].setGraphic(null);
-                    buttons[row][col].setStyle("-fx-background-color: #e0e0e0;");
+                    buttons[row][col].setStyle("-fx-background-color: #FFFFC5;");
                     buttons[row][col].setDisable(true);
                 }
             }
@@ -815,13 +835,13 @@ public class GuiClient extends Application {
 
         VBox playerStats = new VBox(15, p1Label, p1Stats, p2Label, p2Stats, playerListView, hbox333, textN);
         playerStats.setPadding(new Insets(20));
-        playerStats.setStyle("-fx-background-color: #F0F8FF; -fx-border-color: black;");
+        playerStats.setStyle("-fx-background-color: #FFFFE0; -fx-border-color: black;");
         playerStats.setPrefWidth(180);
 
         HBox root = new HBox(30, gameArea, playerStats);
         root.setPadding(new Insets(20));
 
-        return new Scene(root, 700, 550);
+        return new Scene(root, 700, 550, Color.web("#FFFFC5"));
     }
 
 
@@ -830,7 +850,7 @@ public class GuiClient extends Application {
     private Scene buildJoinRoomScene(String username) {
         VBox layout = new VBox(15);
         layout.setPadding(new Insets(30));
-        layout.setStyle("-fx-background-color: #F0FFF0;");
+        layout.setStyle("-fx-background-color: #FFFFC5;");
     
         Label label = new Label("Join Game Room");
         TextField roomCodeField = new TextField();
@@ -869,7 +889,7 @@ public class GuiClient extends Application {
         VBox buttons = new VBox(10, enterBtn, randomBtn, backBtn);
         layout.getChildren().addAll(label, roomCodeField, buttons);
     
-        return new Scene(layout, 400, 300);
+        return new Scene(layout, 400, 300, Color.web("#FFFFC5"));
     }
     
     // 밑에부터 4목 게임 요소들
