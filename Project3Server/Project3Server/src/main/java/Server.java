@@ -4,6 +4,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -111,13 +112,28 @@ public class Server {
 
                     if (obj instanceof Message) {
                         data = (Message) obj;
-                        System.out.println("Received message: " + data.message);
-                        callback.accept(data);
-                        updateClients(data);
+
+                        // 🔐 민감 정보 콘솔 출력 제거
+                        if (data.message.startsWith("LOGIN:") || data.message.startsWith("SIGNUP:")) {
+                            System.out.println("[INFO] Received login/signup request.");
+                        } else {
+                            System.out.println("Received message: " + data.message);
+                        }
+
+                        // 🔒 로그인/회원가입 메시지는 다른 클라이언트에 브로드캐스트하지 않음
+                        if (!data.message.startsWith("LOGIN:") && !data.message.startsWith("SIGNUP:")) {
+                            callback.accept(data);
+                            updateClients(data);
+                        }
                     }
 
 
-                    System.out.println("Received message: " + data.message); // 테스토용 로그 출력력
+
+                    // System.out.println("Received message: " + data.message); // 테스토용 로그 출력력
+                    if (!(data.message.startsWith("LOGIN:") || data.message.startsWith("SIGNUP:"))) {
+                        updateClients(data);
+                    }
+                    
 
                     if (data.message.startsWith("SIGNUP:") || data.message.startsWith("LOGIN:")) {
                         String[] parts = data.message.split(":");
@@ -154,27 +170,50 @@ public class Server {
                     
                             continue;
                         }
-                    }else if (data.message.startsWith("ADDFRIEND:")) {
+                    }
+                    else if (data.message.startsWith("ADDFRIEND:")) {
                         String[] parts = data.message.split(":");
                         String user = parts[1];
                         String friend = parts[2];
-                        
+                    
                         if (LoginHandler.getAllUsers().containsKey(friend)) {
                             boolean success = FriendHander.addFriend(user, friend);
-                            String result = success ? "ADDFRIEND_SUCCESS" : "ADDFRIEND_FAIL";
-                            out.writeObject(new Message(user, result));
+                    
+                            if (success) {
+                                // 친구 추가 성공
+                                out.writeObject(new Message(user, "ADDFRIEND_SUCCESS"));
+                    
+                                // 친구 리스트 갱신: user 쪽
+                                Set<String> userFriends = FriendHander.getFriends(user);
+                                out.writeObject(new Message(user, "FRIENDLIST:" + user + ":" + String.join(",", userFriends)));
+                    
+                                // 친구 리스트 갱신: friend 쪽
+                                for (ClientThread t : clients) {
+                                    if (t.username != null && t.username.equals(friend)) {
+                                        Set<String> friendFriends = FriendHander.getFriends(friend);
+                                        t.out.writeObject(new Message(friend, "FRIENDLIST:" + friend + ":" + String.join(",", friendFriends)));
+                                        break; // friend 1명 찾으면 끝
+                                    }
+                                }
+                    
+                            } else {
+                                out.writeObject(new Message(user, "ADDFRIEND_FAIL"));
+                            }
                         } else {
                             out.writeObject(new Message(user, "ADDFRIEND_FAIL"));
                         }
-                    
-                        continue;
-                    }else if (data.message.startsWith("GETFRIEND:")) {
-                        String user = data.message.substring("GETFRIEND:".length());
-                        Set<String> friends = FriendHander.getFriends(user);
-                        String friendStr = String.join(",", friends);
-                        out.writeObject(new Message(user, "FRIENDLIST:" + user + ":" + friendStr));
                         continue;
                     }
+                    
+                    else if (data.message.startsWith("GETFRIEND:")) {
+                        // String user = data.message.substring("GETFRIEND:".length());
+                        // Set<String> friends = FriendHander.getFriends(user);
+                        // String friendStr = String.join(",", friends);
+                        // out.writeObject(new Message(user, "FRIENDLIST:" + user + ":" + friendStr));
+                        continue;
+                    }
+                    
+
                     
                     else if (data.message.startsWith("CREATE_ROOM:")) {
                         String[] parts = data.message.split(":");
@@ -472,9 +511,16 @@ public class Server {
                         String username = data.message.split(":")[1];
                         List<String> history = AccountDatabase.getGameHistory(username);
                     
+                        Set<String> seen = new HashSet<>();
                         for (String entry : history) {
-                            out.writeObject(new Message(username, "HISTORY_ENTRY:" + entry));
-                        }
+                            if (entry != null) {
+                                String trimmed = entry.trim();
+                                if (!trimmed.isEmpty() && !seen.contains(trimmed)) {
+                                    seen.add(trimmed);
+                                    out.writeObject(new Message(username, "HISTORY_ENTRY:" + trimmed));
+                                }
+                            }
+                        }   
                         continue;
                     }
                     
@@ -520,8 +566,12 @@ public class Server {
                     
                     
                     
-                    callback.accept(data);
-                    updateClients(data);
+                    // callback.accept(data);
+                    // updateClients(data);
+                    if (data.type != MessageType.TEXT) {
+                        callback.accept(data);
+                        updateClients(data);
+                    }
 
                 } catch (Exception e) {
                     e.printStackTrace();

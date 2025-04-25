@@ -68,6 +68,10 @@ public class GuiClient extends Application {
     // 추가
     private Scene gameScene;
     private ListView<String> gameChatList;
+    private ComboBox<String> recipientComboBox;
+
+    ListView<String> chatMessages; // new chat for player
+
 
     
 
@@ -153,45 +157,46 @@ public class GuiClient extends Application {
         return new Scene(loginBox, 400, 400);
     }
 
-    private Scene buildChatScene() { // 로그인 화면 대신 사용중중
-        ComboBox<String> listUsers;
-        listUsers = new ComboBox<>();
-        listUsers.getItems().add("ALL");
-        listUsers.setValue("ALL");
-
-        listItems = new ListView<>();
+    private Scene buildChatScene() { // 로그인 화면 대신 사용중
+        recipientComboBox = new ComboBox<>();
+        recipientComboBox.getItems().add("ALL");
+        recipientComboBox.setValue("ALL");
+    
+        chatMessages = new ListView<>();
         c1 = new TextField();
         b1 = new Button("Send");
         b2 = new Button("Back");
-        b2.setPadding(new Insets(0,0,0,30));
-
-        fields = new HBox(10, listUsers, b1, b2);
+        b2.setPadding(new Insets(0, 0, 0, 30));
+    
+        fields = new HBox(10, recipientComboBox, c1, b1, b2);
         fields.setPadding(new Insets(5));
-
+        chatMessages = new ListView<>();
+    
         b1.setOnAction(e -> {
-            clientConnection.send(new Message(listUsers.getValue(), c1.getText()));
-            c1.clear();
+            String recipient = recipientComboBox.getValue();
+            String messageText = c1.getText().trim();  
+            String content = c1.getText();
+            if (!content.isEmpty()) {
+                clientConnection.send(new Message(recipient, content));
+                chatMessages.getItems().add("to " + recipient + ": " + messageText);
+                c1.clear();
+            }
         });
-
+    
         b2.setOnAction(e -> {
             primaryStage.setScene(lobbyScene);
         });
-
-        clientBox = new VBox(10, c1, fields, listItems);
+    
+        clientBox = new VBox(10, fields, chatMessages);
         clientBox.setPadding(new Insets(10));
         clientBox.setStyle("-fx-background-color: #FFFFC5; -fx-font-family: 'serif';");
-
+    
         return new Scene(clientBox, 400, 300, Color.web("#FFFFC5"));
     }
+    
 
     // lobby
     private Scene buildLobbyScene(String username) {
-        // test
-        // double winRate = AccountDatabase.getWinRate(username);
-        // int totalGames = AccountDatabase.getGameCount(username);
-        //test end
-        
-
         VBox leftPane = new VBox(10);
         leftPane.setPadding(new Insets(10));
         leftPane.setStyle("-fx-background-color: #FFFFC5;");
@@ -305,49 +310,52 @@ public class GuiClient extends Application {
                 switch (data.type) {
                     case TEXT:
                         Platform.runLater(() -> {
-                            if (data.message.startsWith("FRIENDLIST:")) {
-                                String[] parts = data.message.split(":");
-                                if (parts.length == 3) {
-                                    String[] friends = parts[2].split(",");
-                                    FriendList.getItems().setAll(friends);
-                                }
-                                return;
-                            }
-
-
+                            
                             if (data.message.equals("LOGIN_SUCCESS") || data.message.equals("SIGNUP_SUCCESS")) {
-                                // primaryStage.setScene(chatScene); // 테스트용용
-                                // primaryStage.setTitle("Client Chat");
                                 String username = usernameField.getText();
                                 this.currentUsername = username;
                                 this.lobbyScene = buildLobbyScene(username);
-                                
+                    
                                 clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
                                 clientConnection.send(new Message("SERVER", "GET_HISTORY:" + username));
                                 Platform.runLater(() -> {
                                     primaryStage.setScene(lobbyScene);
                                     primaryStage.setTitle("Game Lobby");
                                 });
-
-                            } else if (data.message.equals("LOGIN_FAIL") || data.message.equals("SIGNUP_FAIL")) {
+                                return; // ✅ 여기도 return 추가
+                            }
+                            else if (data.message.equals("LOGIN_FAIL") || data.message.equals("SIGNUP_FAIL")) {
                                 showErrorMessage("Login Failed");
                                 try {
                                     clientConnection.close();
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
-                            }else if(data.message.equals("ADDFRIEND_SUCCESS")){
+                            }
+                            // else if(data.message.equals("ADDFRIEND_SUCCESS")){
+                            //     if (AFresultLabel != null)
+                            //         AFresultLabel.setText("User is added");
+                            //     String username = usernameField.getText();
+                            //     clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
+                            // }
+                            if (data.message.equals("ADDFRIEND_SUCCESS")) {
                                 if (AFresultLabel != null)
                                     AFresultLabel.setText("User is added");
                                 String username = usernameField.getText();
                                 clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
-                            }else if(data.message.equals("ADDFRIEND_FAIL")){
+                                return;
+                            }
+                            if (data.message.equals("ADDFRIEND_FAIL")) {
                                 if (AFresultLabel != null)
                                     AFresultLabel.setText("User not found or already added.");
-
-                            }else {
-                                listItems.getItems().add(data.recipient + ": " + data.message);
+                                return;
                             }
+                            else {
+                                // listItems.getItems().add(data.recipient + ": " + data.message);
+                                chatMessages.getItems().add(data.recipient + ": " + data.message);
+                            }
+
+
 
                             if (data.message.startsWith("ROOM_CREATED:")) {
                                 
@@ -411,16 +419,18 @@ public class GuiClient extends Application {
                                 return;
                             }
                             else if (data.message.startsWith("HISTORY_ENTRY:")) {
-                                String entry = data.message.substring("HISTORY_ENTRY:".length());
+                                String entry = data.message.substring("HISTORY_ENTRY:".length()).trim();
+                            
                                 Platform.runLater(() -> {
-                                    if (!historyList.getItems().contains(entry)) {  // ✅ 중복 체크
+                                    if (!entry.isEmpty() && !historyList.getItems().contains(entry)) {
                                         if (historyList.getItems().size() >= 6) {
-                                            historyList.getItems().remove(1); // 0번째는 헤더("Recent Game History")니까 1번 인덱스 삭제
+                                            historyList.getItems().remove(1); // 첫 줄은 "Recent Game History" 라면
                                         }
                                         historyList.getItems().add(entry);
                                     }
                                 });
                             }
+                            
                             
 
                             else if (data.message.startsWith("PROFILE_INFO:")) {
@@ -458,13 +468,23 @@ public class GuiClient extends Application {
 
                             else if (data.message.equals("JOIN_FAIL")) {
                                 showErrorMessage("Join Failed: Invalid or full room.");
-                            } else if (data.message.startsWith("FRIENDLIST:")) {
+                            }
+                            else if (data.message.startsWith("FRIENDLIST:")) {
                                 String[] parts = data.message.split(":");
                                 if (parts.length == 3) {
                                     String[] friends = parts[2].split(",");
                                     FriendList.getItems().setAll(friends);
+                            
+                                    Platform.runLater(() -> {
+                                        recipientComboBox.getItems().clear();
+                                        recipientComboBox.getItems().add("ALL");
+                                        for (String friend : friends) {
+                                            recipientComboBox.getItems().add(friend);
+                                        }
+                                    });
                                 }
-                            } else if (data.message.equals("ADDFRIEND_SUCCESS")) {
+                            }
+                            else if (data.message.equals("ADDFRIEND_SUCCESS")) {
                                 if (AFresultLabel != null)
                                     AFresultLabel.setText("User is added");
                                 String username = usernameField.getText();
@@ -480,11 +500,20 @@ public class GuiClient extends Application {
                                         pendingPlayerList.clear();
                                         for (String p : players) pendingPlayerList.add(p);
                                     }
+                            
                                     if (players.length < 2) {
                                         if (p2Label != null) p2Label.setText("Player 2");
                                         if (p2Stats != null) p2Stats.setText("Rating: N/A\nGames: N/A");
                                     }
-
+                            
+                                    // 🔥 드롭다운 갱신
+                                    recipientComboBox.getItems().clear();
+                                    recipientComboBox.getItems().add("ALL");
+                                    for (String player : players) {
+                                        if (!player.equals(currentUsername)) {
+                                            recipientComboBox.getItems().add(player);
+                                        }
+                                    }
                                 });
                             }
 
@@ -493,10 +522,18 @@ public class GuiClient extends Application {
                             else if (data.message.equals("ADDFRIEND_FAIL")) {
                                 if (AFresultLabel != null)
                                     AFresultLabel.setText("User not found or already added.");
-                            } else {
-                                listItems.getItems().add(data.recipient + ": " + data.message);
                             }
+                            // else {
+                            //     listItems.getItems().add(data.recipient + ": " + data.message);
+                            // }
 
+                            String sender = data.senderName != null ? data.senderName : data.recipient;
+                            String formattedMsg = "From "+sender + ": " + data.message;
+                            if (sender.equals(currentUsername)) return; // 내가 보낸 거면 스킵
+
+                            if (!chatMessages.getItems().contains(formattedMsg)) {
+                                chatMessages.getItems().add(formattedMsg);
+                            }
 
 
                         });
@@ -504,15 +541,17 @@ public class GuiClient extends Application {
         
                     case NEWUSER:
                         Platform.runLater(() -> {
-                            listUsers.getItems().add(data.recipient);
-                            listItems.getItems().add(data.recipient );
+                            // chatMessages.getItems().add(data.recipient);
+                            // chatMessages.getItems().add(data.recipient );
+                            chatMessages.getItems().add("Player " + data.recipient + " joined.");
+
                         });
                         break;
         
                     case DISCONNECT:
                         Platform.runLater(() -> {
-                            listUsers.getItems().remove(data.recipient); // 로그아웃시 좌측화면에서 접속자 지움움
-                            listItems.getItems().add(data.recipient);
+                            chatMessages.getItems().remove(data.recipient); // 로그아웃시 좌측화면에서 접속자 지움움
+                            chatMessages.getItems().add(data.recipient);
                             
                         });
                         break;
@@ -693,7 +732,7 @@ public class GuiClient extends Application {
             clientConnection.send(new Message("SERVER", "LEAVE_ROOM:" + username));
             
             // 히스토리 초기화 후 갱신 요청
-            clientConnection.send(new Message("SERVER", "GET_HISTORY:" + currentUsername));
+            // clientConnection.send(new Message("SERVER", "GET_HISTORY:" + currentUsername));
 
 
             // 로비 화면으로 전환 (최우선으로 실행)
