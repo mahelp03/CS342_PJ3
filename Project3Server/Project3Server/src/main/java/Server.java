@@ -120,10 +120,10 @@ public class Server {
                         }
 
                         // login/sign msg do not broadcast in the other scene
-                        if (!data.message.startsWith("LOGIN:") && !data.message.startsWith("SIGNUP:")) {
-                            callback.accept(data);
-                            updateClients(data);
-                        }
+                        // if (!data.message.startsWith("LOGIN:") && !data.message.startsWith("SIGNUP:")) {
+                        //     callback.accept(data);
+                        //     updateClients(data);
+                        // }
                     }
 
 
