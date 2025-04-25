@@ -16,12 +16,22 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
+import javafx.geometry.Pos;
+
 
 
 
 public class GuiClient extends Application {
+    // for tracking the game scene and its chat ListView (추가)
+    private Scene gameScene;
+    private ListView<String> gameChatList;
 
     TextField c1;
     Button b1, b2;
@@ -93,40 +103,51 @@ public class GuiClient extends Application {
     }
 
     private Scene buildLoginScene() {
-        VBox loginBox = new VBox(15);
-        loginBox.setPadding(new Insets(50));
-        loginBox.setStyle("-fx-background-color: lightblue;");
-
+        // (1) Build your form
+        VBox loginForm = new VBox(15);
+        loginForm.setPadding(new Insets(50));
+        loginForm.setStyle("-fx-background-color: #FFFFC5;");
+        // you already set the scene fill below, so no need for -fx-background-color here
         Label title = new Label("Login");
         usernameField = new TextField();
         usernameField.setPromptText("Enter username");
         passwordField = new PasswordField();
         passwordField.setPromptText("Enter password");
-
         CheckBox agreeCheck = new CheckBox("I agree to the terms of signup");
-
         Button loginButton = new Button("Login");
         Button signupButton = new Button("Signup");
         signupButton.setDisable(true);
+        agreeCheck.setOnAction(e -> signupButton.setDisable(!agreeCheck.isSelected()));
+        loginButton.setOnAction(e -> { isSignUp = false; setupConnection(); });
+        signupButton.setOnAction(e -> { isSignUp = true; setupConnection(); });
+        loginForm.getChildren().addAll(
+        title,
+        usernameField,
+        passwordField,
+        agreeCheck,
+        loginButton,
+        signupButton
+        );
 
-        agreeCheck.setOnAction(e -> {
-            signupButton.setDisable(!agreeCheck.isSelected());
-        });
+        ImageView logo;
+        try {
+            Image img = new Image(getClass().getResourceAsStream("/Connect4.png"));
+            logo = new ImageView(img);
+            logo.setFitWidth(80);
+            logo.setPreserveRatio(true);
+        } catch (Exception ex) {
+            logo = new ImageView();  // fallback empty
+        }
 
-        loginButton.setOnAction(e -> {
-            isSignUp = false;
-            setupConnection();
-        });
-        
-        signupButton.setOnAction(e -> {
-            isSignUp = true;
-            setupConnection();
-        });
-        
+        StackPane root = new StackPane(loginForm, logo);
+        Scene scene = new Scene(root, 400, 400, Color.web("#FFFFC5"));
 
-        loginBox.getChildren().addAll(title, usernameField, passwordField, agreeCheck, loginButton, signupButton);
-        return new Scene(loginBox, 400, 400);
+        StackPane.setAlignment(logo, Pos.BOTTOM_RIGHT);
+        StackPane.setMargin(logo, new Insets(0, 10, 10, 0));
+
+        return scene;
     }
+
 
     private Scene buildChatScene() { // 로그인 화면 대신 사용중중
         ComboBox<String> listUsers;
@@ -154,9 +175,9 @@ public class GuiClient extends Application {
 
         clientBox = new VBox(10, c1, fields, listItems);
         clientBox.setPadding(new Insets(10));
-        clientBox.setStyle("-fx-background-color: blue; -fx-font-family: 'serif';");
+        clientBox.setStyle("-fx-background-color: #FFFFC5; -fx-font-family: 'serif';");
 
-        return new Scene(clientBox, 400, 300);
+        return new Scene(clientBox, 400, 300, Color.web("#FFFFC5"));
     }
 
     // lobby
@@ -169,7 +190,7 @@ public class GuiClient extends Application {
 
         VBox leftPane = new VBox(10);
         leftPane.setPadding(new Insets(10));
-        leftPane.setStyle("-fx-background-color: #E6E6FA;");
+        leftPane.setStyle("-fx-background-color: #FFFFC5;");
 
         Label userLabel = new Label("UserName: " + username);
         ratingLabel = new Label("Rating: "); // 초기화 안해주면 조댐댐
@@ -230,7 +251,7 @@ public class GuiClient extends Application {
         HBox mainLayout = new HBox(20, leftPane, vbox1 );
         mainLayout.setPadding(new Insets(20));
 
-        return new Scene(mainLayout, 600, 400);
+        return new Scene(mainLayout, 600, 400, Color.web("#FFFFC5"));
     }
 
     private Scene buildAddFriendScene(String currentUser) {
@@ -260,7 +281,7 @@ public class GuiClient extends Application {
         HBox hboxaddf = new HBox(15, friendInput, goButton, backButton);
         VBox vboxaddf  = new VBox(10, hboxaddf, AFresultLabel);
         hboxaddf.setPadding(new Insets(20,5,20,5));
-        return new Scene(vboxaddf, 400, 300);
+        return new Scene(vboxaddf, 400, 300, Color.web("#FFFFC5"));
     }
 
 
@@ -275,269 +296,188 @@ public class GuiClient extends Application {
         });
     }
 
-        private void setupConnection() {
-            clientConnection = new Client(data -> {
-                switch (data.type) {
-                    case TEXT:
-                        Platform.runLater(() -> {
-                            if (data.message.startsWith("FRIENDLIST:")) {
-                                String[] parts = data.message.split(":");
-                                if (parts.length == 3) {
-                                    String[] friends = parts[2].split(",");
-                                    FriendList.getItems().setAll(friends);
-                                }
-                                return;
+    private void setupConnection() {
+        clientConnection = new Client(data -> {
+            switch (data.type) {
+    
+                case TEXT:
+                    Platform.runLater(() -> {
+                        // 1) Friend list update
+                        if (data.message.startsWith("FRIENDLIST:")) {
+                            String[] parts = data.message.split(":");
+                            if (parts.length == 3) {
+                                String[] friends = parts[2].split(",");
+                                FriendList.getItems().setAll(friends);
                             }
-
-
-                            if (data.message.equals("LOGIN_SUCCESS") || data.message.equals("SIGNUP_SUCCESS")) {
-                                // primaryStage.setScene(chatScene); // 테스트용용
-                                // primaryStage.setTitle("Client Chat");
-                                String username = usernameField.getText();
-                                this.currentUsername = username;
-                                this.lobbyScene = buildLobbyScene(username);
-                                
-                                clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
-                                clientConnection.send(new Message("SERVER", "GET_HISTORY:" + username));
-                                Platform.runLater(() -> {
-                                    primaryStage.setScene(lobbyScene);
-                                    primaryStage.setTitle("Game Lobby");
-                                });
-
-                            } else if (data.message.equals("LOGIN_FAIL") || data.message.equals("SIGNUP_FAIL")) {
-                                showErrorMessage("Login Failed");
-                                try {
-                                    clientConnection.close();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }else if(data.message.equals("ADDFRIEND_SUCCESS")){
-                                if (AFresultLabel != null)
-                                    AFresultLabel.setText("User is added");
-                                String username = usernameField.getText();
-                                clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
-                            }else if(data.message.equals("ADDFRIEND_FAIL")){
-                                if (AFresultLabel != null)
-                                    AFresultLabel.setText("User not found or already added.");
-
-                            }else {
-                                listItems.getItems().add(data.recipient + ": " + data.message);
+                            return;
+                        }
+    
+                        // 2) In‐game chat routing
+                        if (primaryStage.getScene() == gameScene) {
+                            gameChatList.getItems().add(data.senderName + ": " + data.message);
+                            return;
+                        }
+    
+                        // 3) Login / Signup responses
+                        if (data.message.equals("LOGIN_SUCCESS") || data.message.equals("SIGNUP_SUCCESS")) {
+                            String username = usernameField.getText();
+                            this.currentUsername = username;
+                            this.lobbyScene = buildLobbyScene(username);
+    
+                            clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
+                            clientConnection.send(new Message("SERVER", "GET_HISTORY:" + username));
+                            primaryStage.setScene(lobbyScene);
+                            primaryStage.setTitle("Game Lobby");
+                            return;
+                        } else if (data.message.equals("LOGIN_FAIL") || data.message.equals("SIGNUP_FAIL")) {
+                            showErrorMessage("Login Failed");
+                            try { clientConnection.close(); } catch (Exception e) { e.printStackTrace(); }
+                            return;
+                        }
+    
+                        // 4) Add‐friend responses
+                        if (data.message.equals("ADDFRIEND_SUCCESS")) {
+                            if (AFresultLabel != null) AFresultLabel.setText("User is added");
+                            clientConnection.send(new Message("SERVER", "GETFRIEND:" + usernameField.getText()));
+                            return;
+                        } else if (data.message.equals("ADDFRIEND_FAIL")) {
+                            if (AFresultLabel != null) AFresultLabel.setText("User not found or already added.");
+                            return;
+                        }
+    
+                        // 5) Room creation / join
+                        if (data.message.startsWith("ROOM_CREATED:")) {
+                            lastRoomMessage = data;
+                            String[] parts = data.message.split(":");
+                            String roomName = parts[1], roomCode = parts[2];
+                            primaryStage.setScene(buildGameScene(roomName, usernameField.getText(), roomCode));
+                            return;
+                        } else if (data.message.startsWith("JOIN_SUCCESS:")) {
+                            lastRoomMessage = data;
+                            String[] parts = data.message.split(":");
+                            if (parts.length >= 7) {
+                                String roomName = parts[1], roomCode = parts[2];
+                                player1Name = parts[3];
+                                player2Name = parts[5];
+                                primaryStage.setScene(buildGameScene(roomName, usernameField.getText(), roomCode));
+                                clientConnection.send(new Message("SERVER", "GET_PLAYERLIST:" + roomCode));
+                                clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player1Name));
+                                clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player2Name));
                             }
-
-                            if (data.message.startsWith("ROOM_CREATED:")) {
-                                
-                                lastRoomMessage = data;
-                                String[] parts = data.message.split(":");
-                                String roomName = parts[1];
-                                String roomCode = parts[2];
-                                String username = usernameField.getText();
-                                primaryStage.setScene(buildGameScene(roomName, username, roomCode)); //fixed
+                            return;
+                        }
+    
+                        // 6) Move updates
+                        if (data.message.startsWith("UPDATE_MOVE:") || data.message.startsWith("MOVE:")) {
+                            String[] parts = data.message.split(":");
+                            String mover = parts[1];
+                            int col = Integer.parseInt(parts[2]);
+                            applyMoveToBoard(mover, col);
+                            return;
+                        }
+    
+                        // 7) Game start / reset / history
+                        if (data.message.startsWith("START_GAME:")) {
+                            startbt.setDisable(true);
+                            resetbt.setDisable(false);
+                            gameStarted[0] = true;
+                            return;
+                        } else if (data.message.startsWith("HISTORY_ENTRY:")) {
+                            String entry = data.message.substring("HISTORY_ENTRY:".length());
+                            if (!historyList.getItems().contains(entry)) {
+                                if (historyList.getItems().size() >= 6) historyList.getItems().remove(1);
+                                historyList.getItems().add(entry);
                             }
-                            else if (data.message.startsWith("JOIN_SUCCESS:")) {
-                                System.out.println("[DEBUG] Received JOIN_SUCCESS: " + data.message);
-                                lastRoomMessage = data;
-                            
-                                String[] parts = data.message.split(":");
-                                if (parts.length >= 7) {
-                                    String roomName = parts[1];
-                                    String roomCode = parts[2];
-                                    String player1 = parts[3];
-                                    String player2 = parts[5];
-                            
-                                    // 🔑 저장
-                                    player1Name = player1;
-                                    player2Name = player2;
-                            
-                                    System.out.println("[DEBUG] player1Name = " + player1Name);
-                                    System.out.println("[DEBUG] player2Name = " + player2Name);
-                            
-                                    // 🔁 UI 스레드에서 화면 전환
-                                    Platform.runLater(() -> {
-                                        System.out.println("[DEBUG] Switching to game scene...");
-                                        primaryStage.setScene(buildGameScene(roomName, usernameField.getText(), roomCode));
-                                    });
-                            
-                                    // 요청
-                                    clientConnection.send(new Message("SERVER", "GET_PLAYERLIST:" + roomCode));
-                                    clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player1));
-                                    clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player2));
-                                }
-                            }else if (data.message.startsWith("UPDATE_MOVE:")) {
-                                String[] parts = data.message.split(":");
-                                String mover = parts[1];
-                                int col = Integer.parseInt(parts[2]);
-                            
-                                Platform.runLater(() -> applyMoveToBoard(mover, col));
+                            return;
+                        }
+    
+                        // 8) Profile info / winrate updates
+                        if (data.message.startsWith("PROFILE_INFO:")) {
+                            String[] parts = data.message.split(":");
+                            String targetUser = parts[1];
+                            String[] stats = parts[2].split(",");
+                            double winRate = Double.parseDouble(stats[0]);
+                            int games = Integer.parseInt(stats[1]);
+                            if (targetUser.equals(currentUsername)) {
+                                ratingLabel.setText("Rating: " + winRate + " %");
+                                gamesLabel.setText("Games: " + games + " games");
+                            } else if (targetUser.equals(player1Name)) {
+                                p1Stats.setText("Rating: " + winRate + " %\nGames: " + games);
+                            } else if (targetUser.equals(player2Name)) {
+                                p2Stats.setText("Rating: " + winRate + " %\nGames: " + games);
                             }
-                            else if (data.message.startsWith("MOVE:")) {
-                                String[] parts = data.message.split(":");
-                                String mover = parts[1];
-                                int col = Integer.parseInt(parts[2]);
-                            
-                                Platform.runLater(() -> applyMoveToBoard(mover, col));
-                            }
-                            
-                            if (data.message.startsWith("START_GAME:")) {
-                                Platform.runLater(() -> {
-                                    gameStarted[0] = true;
-                                    startbt.setDisable(true);
-                                    resetbt.setDisable(false);
-                                });
-                                return;
-                            }
-                            else if (data.message.startsWith("HISTORY_ENTRY:")) {
-                                String entry = data.message.substring("HISTORY_ENTRY:".length());
-                                Platform.runLater(() -> {
-                                    if (!historyList.getItems().contains(entry)) {  // ✅ 중복 체크
-                                        if (historyList.getItems().size() >= 6) {
-                                            historyList.getItems().remove(1); // 0번째는 헤더("Recent Game History")니까 1번 인덱스 삭제
-                                        }
-                                        historyList.getItems().add(entry);
-                                    }
-                                });
-                            }
-                            
-
-                            else if (data.message.startsWith("PROFILE_INFO:")) {
-                                System.out.println("[DEBUG] Received PROFILE_INFO: " + data.message);  // 콘솔 확인용
-
-                                String[] parts = data.message.split(":");
-                                String targetUser = parts[1];
-                                String[] stats = parts[2].split(",");
-
-                                String winRate = stats[0];
-                                String totalGames = stats[1];
-
-                                System.out.println("[DEBUG] targetUser = '" + targetUser + "'");
-                                System.out.println("[DEBUG] player1Name = '" + player1Name + "'");
-                                System.out.println("[DEBUG] player2Name = '" + player2Name + "'");
-
-                                Platform.runLater(() -> {
-                                    if (targetUser.equals(currentUsername)) {
-                                        ratingLabel.setText("Rating: " + winRate + " %");
-                                        gamesLabel.setText("Games: " + totalGames + " games");
-                                    }
-                                    if (targetUser.trim().equals(player1Name)) {
-                                        System.out.println("[DEBUG] Updating p1Stats");
-                                        p1Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
-                                    } else if (targetUser.trim().equals(player2Name)) {
-                                        System.out.println("[DEBUG] Updating p2Stats");
-                                        p2Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
-                                    } else {
-                                        System.out.println("[DEBUG] targetUser didn't match either player name");
-                                    }
-                                });
-                            }
-                            
-                            
-
-                            else if (data.message.equals("JOIN_FAIL")) {
-                                showErrorMessage("Join Failed: Invalid or full room.");
-                            } else if (data.message.startsWith("FRIENDLIST:")) {
-                                String[] parts = data.message.split(":");
-                                if (parts.length == 3) {
-                                    String[] friends = parts[2].split(",");
-                                    FriendList.getItems().setAll(friends);
-                                }
-                            } else if (data.message.equals("ADDFRIEND_SUCCESS")) {
-                                if (AFresultLabel != null)
-                                    AFresultLabel.setText("User is added");
-                                String username = usernameField.getText();
-                                clientConnection.send(new Message("SERVER", "GETFRIEND:" + username));
-                            }
-                            else if (data.message.startsWith("PLAYER_LIST:")) {
-                                String[] players = data.message.substring("PLAYER_LIST:".length()).split(",");
-                            
-                                Platform.runLater(() -> {
-                                    if (playerListView != null) {
-                                        playerListView.setItems(javafx.collections.FXCollections.observableArrayList(players));
-                                    } else {
-                                        pendingPlayerList.clear();
-                                        for (String p : players) pendingPlayerList.add(p);
-                                    }
-                                    if (players.length < 2) {
-                                        if (p2Label != null) p2Label.setText("Player 2");
-                                        if (p2Stats != null) p2Stats.setText("Rating: N/A\nGames: N/A");
-                                    }
-
-                                });
-                            }
-
-                            
-                            
-                            else if (data.message.equals("ADDFRIEND_FAIL")) {
-                                if (AFresultLabel != null)
-                                    AFresultLabel.setText("User not found or already added.");
-                            } else {
-                                listItems.getItems().add(data.recipient + ": " + data.message);
-                            }
-
-
-
-                        });
-                        break;
-        
-                    case NEWUSER:
-                        Platform.runLater(() -> {
-                            listUsers.getItems().add(data.recipient);
-                            listItems.getItems().add(data.recipient );
-                        });
-                        break;
-        
-                    case DISCONNECT:
-                        Platform.runLater(() -> {
-                            listUsers.getItems().remove(data.recipient); // 로그아웃시 좌측화면에서 접속자 지움움
-                            listItems.getItems().add(data.recipient);
-                            
-                        });
-                        break;
-                        case WINRATE_INFO:
-                        Platform.runLater(() -> {
-                            String[] parts = data.message.split(",");
-                            String winRate = parts[0];
-                            String totalGames = parts[1];
-
-                            System.out.println("[DEBUG] Received updated stats for: " + data.recipient);
-                            System.out.println("[DEBUG] winRate = " + winRate + ", totalGames = " + totalGames);
-
-                    
-                            if (data.recipient.equals(player1Name)) {
-                                p1Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
-                            } else if (data.recipient.equals(player2Name)) {
-                                p2Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
-                            }
-                        });
-                        break;
-                    
-                }
-            });
+                            return;
+                        }
+    
+                        // 9) Join‐fail fallback
+                        if (data.message.equals("JOIN_FAIL")) {
+                            showErrorMessage("Join Failed: Invalid or full room.");
+                            return;
+                        }
+    
+                        // 10) Player‐list in lobby/lobby updates
+                        if (data.message.startsWith("PLAYER_LIST:")) {
+                            String[] players = data.message.substring("PLAYER_LIST:".length()).split(",");
+                            playerListView.setItems(javafx.collections.FXCollections.observableArrayList(players));
+                            return;
+                        }
+    
+                        // 11) Final fallback: general chat list
+                        listItems.getItems().add(data.recipient + ": " + data.message);
+                    });
+                    break;
+    
+                case NEWUSER:
+                    Platform.runLater(() -> {
+                        listUsers.getItems().add(data.recipient);
+                        listItems.getItems().add(data.recipient);
+                    });
+                    break;
+    
+                case DISCONNECT:
+                    Platform.runLater(() -> {
+                        listUsers.getItems().remove(data.recipient);
+                        listItems.getItems().add(data.recipient);
+                    });
+                    break;
+    
+                case WINRATE_INFO:
+                    Platform.runLater(() -> {
+                        String[] parts = data.message.split(",");
+                        String winRate = parts[0], totalGames = parts[1];
+                        if (data.recipient.equals(player1Name)) {
+                            p1Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
+                        } else if (data.recipient.equals(player2Name)) {
+                            p2Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
+                        }
+                    });
+                    break;
+            }
+        });
     
         clientConnection.start();
     
+        // Send login/signup payload once streams are ready
         new Thread(() -> {
             try {
-                while (clientConnection.out == null) {
-                    Thread.sleep(50);
-                }
-    
-                String username = usernameField.getText();
-                String password = passwordField.getText();
-                String payload = (isSignUp ? "SIGNUP" : "LOGIN") + ":" + username + ":" + password;
-    
+                while (clientConnection.out == null) Thread.sleep(50);
+                String user = usernameField.getText();
+                String pass = passwordField.getText();
+                String payload = (isSignUp ? "SIGNUP" : "LOGIN") + ":" + user + ":" + pass;
                 clientConnection.send(new Message("ALL", payload));
-    
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }).start();
     }
+    
 
     
     
     private Scene buildCreateRoomScene(String username) {
         VBox layout = new VBox(15);
         layout.setPadding(new Insets(40));
-        layout.setStyle("-fx-background-color: #FAFAD2;");
+        layout.setStyle("-fx-background-color: #FFFFC5;");
     
         Label label = new Label("Enter Room Name:");
         TextField roomInput = new TextField();
@@ -563,7 +503,7 @@ public class GuiClient extends Application {
         HBox buttonRow = new HBox(15, enterButton, backButton);
         layout.getChildren().addAll(label, roomInput, buttonRow);
     
-        return new Scene(layout, 400, 300);
+        return new Scene(layout, 400, 300, Color.web("#FFFFC5"));
     }
     
     // 커넥트4 ui빌드
@@ -603,7 +543,7 @@ public class GuiClient extends Application {
                 Button cell = new Button();
                 cell.setMinSize(50, 50);
                 cell.setMaxSize(50, 50);
-                cell.setStyle("-fx-background-color: #e0e0e0;");
+                cell.setStyle("-fx-background-color: FFFFE0;");
 
                 int finalCol = col;
                 cell.setOnAction(e -> {
@@ -627,39 +567,6 @@ public class GuiClient extends Application {
 
                     
                     clientConnection.send(new Message("SERVER", "MOVE:" + roomCode + ":" + username + ":" + finalCol));
-                    // if (gameOver[0]) return;
-                    // int dropRow = -1;
-                    // System.out.println(username + " clicked column " + finalCol);
-                    // for (int r = rows-1; r >= 0; r--) {
-                    //     if (board[r][finalCol] == 0) {
-                    //         dropRow = r;
-                            
-                    //         break;
-                    //     }
-                        
-                    // }
-                    // if (dropRow == -1) return; // Column full
-
-                    // int currentPlayer = playerTurn[0] ? 1 : 2;
-                    // board[dropRow][finalCol] = currentPlayer;
-                    // updateButton(buttons, dropRow, finalCol, currentPlayer);
-                    // buttons[dropRow][finalCol].setDisable(true);
-
-                    // if (checkWin(board, dropRow, finalCol, currentPlayer)) {
-                    //     gameOver[0] = true;
-                    //     turnLabel.setText("Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)") + " wins!");
-                    //     showWinDialog("Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)") + " wins!");
-                    //     return;
-                    // } else if (isDraw(board)) {
-                    //     gameOver[0] = true;
-                    //     turnLabel.setText("Draw!");
-                    //     showWinDialog("It's a draw!");
-                    //     return;
-                    // }
-
-                    // // Switch turn
-                    // playerTurn[0] = !playerTurn[0];
-                    // turnLabel.setText("Turn: Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)"));
                 });
                 gameBoard.add(cell, col, row);
                 buttons[row][col] = cell;
@@ -799,7 +706,7 @@ public class GuiClient extends Application {
                 for (int col = 0; col < cols; col++) {
                     board[row][col] = 0;
                     buttons[row][col].setGraphic(null);
-                    buttons[row][col].setStyle("-fx-background-color: #e0e0e0;");
+                    buttons[row][col].setStyle("-fx-background-color: #FFFFC5;");
                     buttons[row][col].setDisable(true);
                 }
             }
@@ -815,13 +722,46 @@ public class GuiClient extends Application {
 
         VBox playerStats = new VBox(15, p1Label, p1Stats, p2Label, p2Stats, playerListView, hbox333, textN);
         playerStats.setPadding(new Insets(20));
-        playerStats.setStyle("-fx-background-color: #F0F8FF; -fx-border-color: black;");
+        playerStats.setStyle("-fx-background-color: #FFFFE0; -fx-border-color: black;");
         playerStats.setPrefWidth(180);
 
-        HBox root = new HBox(30, gameArea, playerStats);
+        // ─── Begin in‐game chat UI ───
+        gameChatList = new ListView<>();
+        gameChatList.setPrefHeight(200);
+        gameChatList.setPlaceholder(new Label("No messages yet"));
+
+        TextField gameChatInput = new TextField();
+        gameChatInput.setPromptText("Type a message…");
+        gameChatInput.setPrefWidth(150);
+
+        Button gameChatSend = new Button("Send");
+        gameChatSend.setOnAction(e -> {
+            String text = gameChatInput.getText().trim();
+            if (!text.isEmpty()) {
+                // Send to server tagged as TEXT in this room
+                Message m = new Message("SERVER", "GAMECHAT:" + roomCode + ":" + currentUsername + ":" + text);
+                m.type = MessageType.TEXT;
+                clientConnection.send(m);
+                gameChatInput.clear();
+            }
+        });
+
+        HBox chatEntry = new HBox(5, gameChatInput, gameChatSend);
+        chatEntry.setAlignment(Pos.CENTER);
+
+        VBox gameChatBox = new VBox(5, new Label("Game Chat"), gameChatList, chatEntry);
+        gameChatBox.setPrefWidth(200);
+        gameChatBox.setStyle("-fx-background-color: #FFFFC5; -fx-padding: 10;");
+        // ─── End in‐game chat UI ───
+
+
+        HBox root = new HBox(30, gameArea, playerStats, gameChatBox);
         root.setPadding(new Insets(20));
 
-        return new Scene(root, 700, 550);
+        Scene scene = new Scene(root, 700, 550, Color.web("#FFFFC5"));
+        this.gameScene = scene;
+        return scene;
+
     }
 
 
@@ -830,7 +770,7 @@ public class GuiClient extends Application {
     private Scene buildJoinRoomScene(String username) {
         VBox layout = new VBox(15);
         layout.setPadding(new Insets(30));
-        layout.setStyle("-fx-background-color: #F0FFF0;");
+        layout.setStyle("-fx-background-color: #FFFFC5;");
     
         Label label = new Label("Join Game Room");
         TextField roomCodeField = new TextField();
@@ -869,7 +809,7 @@ public class GuiClient extends Application {
         VBox buttons = new VBox(10, enterBtn, randomBtn, backBtn);
         layout.getChildren().addAll(label, roomCodeField, buttons);
     
-        return new Scene(layout, 400, 300);
+        return new Scene(layout, 400, 300, Color.web("#FFFFC5"));
     }
     
     // 밑에부터 4목 게임 요소들
