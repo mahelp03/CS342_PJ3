@@ -118,12 +118,6 @@ public class Server {
                         } else {
                             System.out.println("Received message: " + data.message);
                         }
-
-                        // login/sign msg do not broadcast in the other scene
-                        // if (!data.message.startsWith("LOGIN:") && !data.message.startsWith("SIGNUP:")) {
-                        //     callback.accept(data);
-                        //     updateClients(data);
-                        // }
                     }
 
 

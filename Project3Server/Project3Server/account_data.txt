@@ -1,7 +1,7 @@
 Username:111,Password:111,Wins:4,Total:8,History:Room KR6JMI - 111 vs 222: 111 Won!!;Room 11GT8G - 333 vs 111: 333 Won!!;Room X1JZH3 - 444 vs 111: 444 Won!!;Room X2Q1TS - 111 vs 222: 111 Won!!,Friends:222;666
 Username:222,Password:222,Wins:2,Total:6,History:Room KR6JMI - 111 vs 222: 111 Won!!;Room MZ6QV7 - 222 vs 333: 222 Won!!;Room X2Q1TS - 111 vs 222: 111 Won!!,Friends:111;333
-Username:333,Password:333,Wins:2,Total:5,History:Room 11GT8G - 333 vs 111: 333 Won!!;Room MZ6QV7 - 222 vs 333: 222 Won!!;Room 8E8ZRG - 444 vs 333: 444 Won!!,Friends:222;444
+Username:333,Password:333,Wins:2,Total:5,History:Room 11GT8G - 333 vs 111: 333 Won!!;Room MZ6QV7 - 222 vs 333: 222 Won!!;Room 8E8ZRG - 444 vs 333: 444 Won!!,Friends:222;444;555
 Username:444,Password:444,Wins:3,Total:3,History:Room X1JZH3 - 444 vs 111: 444 Won!!;Room 8E8ZRG - 444 vs 333: 444 Won!!,Friends:333
-Username:555,Password:555,Wins:0,Total:2,History:Room UNHPZ5 - 666 vs 555: 666 Won!!,Friends:
+Username:555,Password:555,Wins:0,Total:2,History:Room UNHPZ5 - 666 vs 555: 666 Won!!,Friends:333
 Username:666,Password:666,Wins:2,Total:2,History:Room UNHPZ5 - 666 vs 555: 666 Won!!,Friends:111
 Username:888,Password:888,Wins:0,Total:0,History:,Friends:
