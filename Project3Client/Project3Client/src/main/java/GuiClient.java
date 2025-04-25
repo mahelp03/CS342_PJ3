@@ -655,9 +655,6 @@ public class GuiClient extends Application {
                         }
                     }
                     if (dropRow == -1) return;
-
-
-
                     
                     clientConnection.send(new Message("SERVER", "MOVE:" + roomCode + ":" + username + ":" + finalCol));
                     

@@ -39,7 +39,7 @@ public class FriendHander {
                     writer.println(user + ":" + friend);
                 }
             }
-            System.out.println("[SAVE] Friends saved to " + filename);
+            System.out.println("Friends saved to " + filename);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -48,7 +48,7 @@ public class FriendHander {
     public static void loadFriendsFromFile(String filename) {
         File file = new File(filename);
         if (!file.exists()) {
-            System.out.println("[LOAD] Friends file not found, starting fresh.");
+            System.out.println("Friends file not found, starting fresh.");
             return;
         }
 
@@ -67,7 +67,7 @@ public class FriendHander {
                     friends.get(friend).add(user);
                 }
             }
-            System.out.println("[LOAD] Friends loaded from " + filename);
+            System.out.println("Friends loaded from " + filename);
         } catch (IOException e) {
             e.printStackTrace();
         }

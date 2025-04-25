@@ -57,7 +57,7 @@ public class Server {
         }
 
         private String generateRoomCode() {
-            String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // IDK
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < 6; i++) {
                 sb.append(chars.charAt((int)(Math.random() * chars.length())));
@@ -113,14 +113,13 @@ public class Server {
                     if (obj instanceof Message) {
                         data = (Message) obj;
 
-                        // 🔐 민감 정보 콘솔 출력 제거
                         if (data.message.startsWith("LOGIN:") || data.message.startsWith("SIGNUP:")) {
-                            System.out.println("[INFO] Received login/signup request.");
+                            System.out.println("Received login/signup request.");
                         } else {
                             System.out.println("Received message: " + data.message);
                         }
 
-                        // 🔒 로그인/회원가입 메시지는 다른 클라이언트에 브로드캐스트하지 않음
+                        // login/sign msg do not broadcast in the other scene
                         if (!data.message.startsWith("LOGIN:") && !data.message.startsWith("SIGNUP:")) {
                             callback.accept(data);
                             updateClients(data);
@@ -129,7 +128,7 @@ public class Server {
 
 
 
-                    // System.out.println("Received message: " + data.message); // 테스토용 로그 출력력
+                    // System.out.println("Received message: " + data.message); // log testing
                     if (!(data.message.startsWith("LOGIN:") || data.message.startsWith("SIGNUP:"))) {
                         updateClients(data);
                     }
@@ -222,14 +221,14 @@ public class Server {
                     
                         String roomCode;
                         do {
-                            roomCode = generateRoomCode(); // 중복 방지
+                            roomCode = generateRoomCode(); // prevent duplicating
                         } while (gameRooms.containsKey(roomCode));
                     
                         GameRoom newRoom = new GameRoom(roomCode,roomName, creator);
                         gameRooms.put(roomCode, newRoom);
                     
-                        System.out.println("[ROOM CREATED] RoomCode: " + roomCode + ", Name: " + roomName + ", Creator: " + creator);
-                        System.out.println("[ROOM STATE] Players in room " + roomCode + ":");
+                        System.out.println("RoomCode: " + roomCode + ", Name: " + roomName + ", Creator: " + creator);
+                        System.out.println("Players in room " + roomCode + ":");
                         for (String player : newRoom.getPlayers()) {
                             System.out.println(" - " + player);
                         }
@@ -250,7 +249,7 @@ public class Server {
                             playerListMsg.deleteCharAt(playerListMsg.length() - 1);
                         }
 
-                        System.out.println("[DEBUG] Sending PLAYER_LIST to creator of new room " + roomCode + ":");
+                        System.out.println("Sending PLAYER_LIST to creator of new room " + roomCode + ":");
                         for (String p : players) {
                             System.out.println(" - " + p);
                         }
@@ -271,15 +270,15 @@ public class Server {
                         if (room != null && !room.isFull()) {
                             room.addPlayer(username);
 
-                            System.out.println("[ROOM JOINED] User: " + username + " entered RoomCode: " + roomCode);
-                            System.out.println("[ROOM STATE] Players in room " + roomCode + ":");
+                            System.out.println("User: " + username + " entered RoomCode: " + roomCode);
+                            System.out.println("Players in room " + roomCode + ":");
                             for (String player : room.getPlayers()) {
                                 System.out.println(" - " + player);
                             }
                     
                             List<String> players = room.getPlayers();
                     
-                            // ✅ 현재 플레이어 목록을 문자열로 구성
+                            // construct list as string
                             StringBuilder playerListMsg = new StringBuilder("PLAYER_LIST:");
                             for (String p : players) {
                                 playerListMsg.append(p).append(",");
@@ -288,15 +287,14 @@ public class Server {
                                 playerListMsg.deleteCharAt(playerListMsg.length() - 1);
                             }
                     
-                            // ✅ 방에 있는 유저 모두에게 PLAYER_LIST 메시지 전송
+                            // send every player on same room
                             for (ClientThread t : clients) {
                                 if (t.username != null && players.contains(t.username)) {
                                     t.out.writeObject(new Message(t.username, playerListMsg.toString()));
                                 }
                             }
                     
-                            // ✅ 기존 JOIN_SUCCESS 로직 유지
-                            if (players.size() == 2) {
+                            if (players.size() == 2) { // room capacity limits
                                 String player1 = players.get(0);
                                 String player2 = players.get(1);
                     
@@ -336,7 +334,7 @@ public class Server {
                     
                         String profileInfo = "PROFILE_INFO:" + username + ":" + rate + "," + games;
                         out.writeObject(new Message(username, profileInfo));
-                        System.out.println("[DEBUG] Sent profile for " + username + ": " + rate + " %, " + games + " games");
+                        System.out.println("Sent profile for " + username + ": " + rate + " %, " + games + " games");
                         continue;
                     }
                     else if (data.message.startsWith("JOIN_RANDOM_REQUEST:")) {
@@ -348,8 +346,8 @@ public class Server {
                                 room.addPlayer(username);
                                 joinedRoom = room;
                     
-                                System.out.println("[RANDOM JOIN] User: " + username + " joined RoomCode: " + room.getRoomCode());
-                                System.out.println("[ROOM STATE] Players in room " + room.getRoomCode() + ":");
+                                System.out.println("User: " + username + " joined RoomCode: " + room.getRoomCode());
+                                System.out.println("Players in room " + room.getRoomCode() + ":");
                                 for (String player : room.getPlayers()) {
                                     System.out.println(" - " + player);
                                 }
@@ -395,7 +393,7 @@ public class Server {
                         String username = parts[2];
                         int col = Integer.parseInt(parts[3]);
                     
-                        // 💡 방 안 플레이어 모두에게 전송
+                        // send every player in game
                         GameRoom room = gameRooms.get(roomCode);
                         if (room != null) {
                             for (ClientThread t : clients) {
@@ -423,13 +421,13 @@ public class Server {
                                 playerListMsg.deleteCharAt(playerListMsg.length() - 1);
                             }
                     
-                            // ✅ 로그로 확인
-                            System.out.println("[DEBUG] Sending PLAYER_LIST to clients in room " + roomCode + ":");
+                            // log testing
+                            System.out.println("Sending PLAYER_LIST to clients in room " + roomCode + ":");
                             for (String p : players) {
                                 System.out.println(" - " + p);
                             }
                     
-                            // 전송
+                            // sending, maybe??
                             for (ClientThread t : clients) {
                                 if (t.username != null && players.contains(t.username)) {
                                     t.out.writeObject(new Message(t.username, playerListMsg.toString()));
@@ -463,12 +461,12 @@ public class Server {
                         // 전적 업데이트
                         AccountDatabase.incrementGameCount(winner);
                         AccountDatabase.incrementGameCount(loser);
-                        AccountDatabase.incrementWinCount(winner);  // 승자만 승리 수 증가
+                        AccountDatabase.incrementWinCount(winner);
 
-                        System.out.println("[DEBUG] GAME_RESULT processed.");
-                        System.out.println("[DEBUG] Winner: " + winner + ", Loser: " + loser);
-                        System.out.println("[DEBUG] " + winner + " Games: " + AccountDatabase.getGameCount(winner) + ", Wins: " + AccountDatabase.getWinCount(winner));
-                        System.out.println("[DEBUG] " + loser + " Games: " + AccountDatabase.getGameCount(loser) + ", Wins: " + AccountDatabase.getWinCount(loser));
+                        System.out.println("GAME_RESULT processed.");
+                        System.out.println("Winner: " + winner + ", Loser: " + loser);
+                        System.out.println(winner + " Games: " + AccountDatabase.getGameCount(winner) + ", Wins: " + AccountDatabase.getWinCount(winner));
+                        System.out.println(loser + " Games: " + AccountDatabase.getGameCount(loser) + ", Wins: " + AccountDatabase.getWinCount(loser));
                         double winRateW = AccountDatabase.getWinRate(winner);
                         int gamesW = AccountDatabase.getGameCount(winner);
                         Message m1 = new Message(winner, winRateW + "," + gamesW, MessageType.WINRATE_INFO);
@@ -486,7 +484,7 @@ public class Server {
                             }
                         }
 
-                        // ✅ 히스토리 기록 및 전송
+                        // history send
                         String roomCode = "";
                         for (Map.Entry<String, GameRoom> entry : gameRooms.entrySet()) {
                             if (entry.getValue().hasPlayer(winner) && entry.getValue().hasPlayer(loser)) {
@@ -504,7 +502,7 @@ public class Server {
                                 t.out.writeObject(m2);
                             }
                         }
-                        System.out.println("[STATS] Updated results - Winner: " + winner + ", Loser: " + loser);
+                        System.out.println("Updated results - Winner: " + winner + ", Loser: " + loser);
                         continue;
                     }
                     else if (data.message.startsWith("GET_HISTORY:")) {
@@ -533,10 +531,9 @@ public class Server {
                             if (room.hasPlayer(username)) {
                                 room.removePlayer(username);
                     
-                                // ✅ 콘솔 확인
                                 System.out.println("[ROOM LEFT] " + username + " left room " + room.getRoomCode());
                     
-                                // ✅ PLAYER_LIST 다시 전송
+                                // reload player list
                                 List<String> players = room.getPlayers();
                                 StringBuilder playerListMsg = new StringBuilder("PLAYER_LIST:");
                                 for (String p : players) {
@@ -564,10 +561,6 @@ public class Server {
                         continue;
                     }
                     
-                    
-                    
-                    // callback.accept(data);
-                    // updateClients(data);
                     if (data.type != MessageType.TEXT) {
                         callback.accept(data);
                         updateClients(data);

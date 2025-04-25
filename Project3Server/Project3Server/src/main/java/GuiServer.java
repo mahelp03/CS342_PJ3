@@ -43,9 +43,7 @@ public class GuiServer extends Application {
         });
 
         
-
         serverConnection = new Server(data -> {
-
             String displayName = data.senderName != null ? data.senderName : data.recipient;
             switch (data.type) {
                 case TEXT:
