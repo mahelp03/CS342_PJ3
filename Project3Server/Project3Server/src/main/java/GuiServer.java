@@ -65,28 +65,34 @@ public class GuiServer extends Application {
 
     private Scene createMainScene() {
         Label label1 = new Label("Server: Connect4");
-        label1.setFont(Font.font("Serif", 20));
+        label1.setFont(Font.font("Arial", 20));
+        label1.setPadding(new Insets(0,0,0,30));
         Button accountButton = new Button("Account");
+        accountButton.setPrefSize(100,40);
         Button messageButton = new Button("View Messages");
-        messageButton.setOnAction(e -> primaryStage.setScene(messageScene));
+        messageButton.setPrefSize(100,40);
+ 
+        messageButton.setOnAction(e -> {
+            primaryStage.setScene(messageScene);
+        });
 
         accountButton.setOnAction(e -> {
             refreshAccountTable();
             primaryStage.setScene(accountScene);
         });
 
-        VBox buttonBox = new VBox(20, label1, accountButton, messageButton);
-        buttonBox.setPadding(new Insets(100, 0, 0, 150));
-
-        BorderPane mainPane = new BorderPane();
-        mainPane.setStyle("-fx-background-color: lightgray; -fx-font-family: 'serif';");
-        mainPane.setCenter(buttonBox);
-
-        return new Scene(mainPane, 500, 400);
+        HBox buttonBox = new HBox(20, accountButton, messageButton);
+        VBox u8 = new VBox(20, label1, buttonBox);
+        
+        BorderPane mainPane = new BorderPane(u8);
+        u8.setPadding(new Insets(140,0,0,200));
+        mainPane.setStyle("-fx-background-color: lightblue; -fx-font-family: 'serif';");
+        
+        return new Scene(mainPane, 600, 400);
     }
 
     private Scene createMessageScene() {
-        Label label = new Label("Message Scene");
+        Label label = new Label("Status");
         label.setFont(Font.font("Times New Roman", 18));
 
         listItems = new ListView<>();
@@ -102,7 +108,7 @@ public class GuiServer extends Application {
         messageLayout.setPadding(new Insets(20));
 
         BorderPane messagePane = new BorderPane();
-        messagePane.setStyle("-fx-background-color: coral; -fx-font-family: 'serif';");
+        messagePane.setStyle("-fx-background-color: lightblue; -fx-font-family: 'serif';");
         messagePane.setCenter(messageLayout);
 
         return new Scene(messagePane, 600, 400);

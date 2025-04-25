@@ -535,7 +535,7 @@ public class Server {
                             if (room.hasPlayer(username)) {
                                 room.removePlayer(username);
                     
-                                System.out.println("[ROOM LEFT] " + username + " left room " + room.getRoomCode());
+                                System.out.println("ROOM LEFT " + username + " left room " + room.getRoomCode());
                     
                                 // reload player list
                                 List<String> players = room.getPlayers();
@@ -547,7 +547,7 @@ public class Server {
                                     playerListMsg.deleteCharAt(playerListMsg.length() - 1);
                                 }
                     
-                                System.out.println("[DEBUG] Broadcasting updated PLAYER_LIST after leave:");
+                                System.out.println("Broadcasting updated PLAYER_LIST after leave:");
                                 for (String p : players) {
                                     System.out.println(" - " + p);
                                 }

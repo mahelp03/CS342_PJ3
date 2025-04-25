@@ -157,9 +157,11 @@ public class GuiClient extends Application {
     
         chatMessages = new ListView<>();
         c1 = new TextField();
+        c1.setPrefSize(200, 20);
         b1 = new Button("Send");
-        b1.setPrefSize(40, 20);
-        b2 = new Button("Back"); 
+        b1.setPrefSize(50, 20);
+        b2 = new Button("Back");
+        b2.setPrefSize(50, 20); 
         // b2.setPadding(new Insets(0, 0, 0, 30));
         HBox t7 = new HBox(5, b1, b2);
     
@@ -217,14 +219,17 @@ public class GuiClient extends Application {
 
         createRoom.setOnAction(e -> {
             Scene createRoomScene = buildCreateRoomScene(username);
+            primaryStage.setTitle("CreateRoom");
             primaryStage.setScene(createRoomScene);
         });
         
         Button joinRoom = new Button("Join");
+        
         joinRoom.setPrefSize(100, 10);
 
         joinRoom.setOnAction(e -> {
             Scene joinRoomScene = buildJoinRoomScene(username);
+            primaryStage.setTitle("JoinRoom");
             primaryStage.setScene(joinRoomScene);
         });
         
@@ -250,15 +255,14 @@ public class GuiClient extends Application {
         
 
         FriendList = new ListView<>();
-        FriendList.setPrefHeight(200);
-        FriendList.setPrefWidth(100);
+        FriendList.setPrefSize(100, 330);
         HBox hbox1 = new HBox(10, addFriend, textMessage);
         VBox vbox1 = new VBox(10, hbox1, FriendList);
 
         HBox mainLayout = new HBox(20, leftPane, vbox1 );
         mainLayout.setPadding(new Insets(20));
 
-        return new Scene(mainLayout, 600, 400, Color.web("#FFFFC5"));
+        return new Scene(mainLayout, 500, 400, Color.web("#FFFFC5"));
     }
 
     private Scene buildAddFriendScene(String currentUser) {
@@ -266,11 +270,11 @@ public class GuiClient extends Application {
     
         TextField friendInput = new TextField();
         friendInput.setPromptText("Enter Username");
+        friendInput.setPrefSize(300, 30);
     
         Button goButton = new Button("Go");
+        goButton.setPrefSize(100, 30);
 
-        
-    
         goButton.setOnAction(e -> {
             String friendName = friendInput.getText().trim();
             if (!friendName.isEmpty()) {
@@ -280,12 +284,13 @@ public class GuiClient extends Application {
         });
     
         Button backButton = new Button("Back");
+        backButton.setPrefSize(100, 30);
         backButton.setOnAction(e -> primaryStage.setScene(lobbyScene));
-        
-        HBox hboxaddf = new HBox(15, friendInput, goButton, backButton);
+        HBox a1 = new HBox(10, goButton, backButton);
+        HBox hboxaddf = new HBox(15, friendInput, a1);
         VBox vboxaddf  = new VBox(10, hboxaddf, AFresultLabel);
-        hboxaddf.setPadding(new Insets(20,5,20,5));
-        return new Scene(vboxaddf, 400, 300, Color.web("#FFFFC5"));
+        vboxaddf.setPadding(new Insets(80,5,20,8));
+        return new Scene(vboxaddf, 410, 200, Color.web("#FFFFC5"));
     }
 
 
@@ -354,9 +359,10 @@ public class GuiClient extends Application {
                                 String roomCode = parts[2];
                                 String username = usernameField.getText();
                                 primaryStage.setScene(buildGameScene(roomName, username, roomCode)); //fixed
+                                primaryStage.setTitle("Ingame");
                             }
                             else if (data.message.startsWith("JOIN_SUCCESS:")) {
-                                System.out.println("[DEBUG] Received JOIN_SUCCESS: " + data.message);
+                                System.out.println("Received JOIN_SUCCESS: " + data.message);
                                 lastRoomMessage = data;
                             
                                 String[] parts = data.message.split(":");
@@ -370,13 +376,14 @@ public class GuiClient extends Application {
                                     player1Name = player1;
                                     player2Name = player2;
                             
-                                    System.out.println("[DEBUG] player1Name = " + player1Name);
-                                    System.out.println("[DEBUG] player2Name = " + player2Name);
+                                    System.out.println("player1Name = " + player1Name);
+                                    System.out.println("player2Name = " + player2Name);
                             
                                     // UI Thread change
                                     Platform.runLater(() -> {
-                                        System.out.println("[DEBUG] Switching to game scene...");
+                                        System.out.println("Switching to game scene...");
                                         primaryStage.setScene(buildGameScene(roomName, usernameField.getText(), roomCode));
+                                        primaryStage.setTitle("Ingame");
                                     });
                             
                                     // request
@@ -419,11 +426,8 @@ public class GuiClient extends Application {
                                     }
                                 });
                             }
-                            
-                            
-
                             else if (data.message.startsWith("PROFILE_INFO:")) {
-                                System.out.println("[DEBUG] Received PROFILE_INFO: " + data.message);  // console check
+                                System.out.println("Received PROFILE_INFO: " + data.message);  // console check
 
                                 String[] parts = data.message.split(":");
                                 String targetUser = parts[1];
@@ -432,9 +436,9 @@ public class GuiClient extends Application {
                                 String winRate = stats[0];
                                 String totalGames = stats[1];
 
-                                System.out.println("[DEBUG] targetUser = '" + targetUser + "'");
-                                System.out.println("[DEBUG] player1Name = '" + player1Name + "'");
-                                System.out.println("[DEBUG] player2Name = '" + player2Name + "'");
+                                System.out.println("targetUser = '" + targetUser + "'");
+                                System.out.println("player1Name = '" + player1Name + "'");
+                                System.out.println("player2Name = '" + player2Name + "'");
 
                                 Platform.runLater(() -> {
                                     if (targetUser.equals(currentUsername)) {
@@ -442,13 +446,13 @@ public class GuiClient extends Application {
                                         gamesLabel.setText("Games: " + totalGames + " games");
                                     }
                                     if (targetUser.trim().equals(player1Name)) {
-                                        System.out.println("[DEBUG] Updating p1Stats");
+                                        System.out.println("Updating p1Stats");
                                         p1Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
                                     } else if (targetUser.trim().equals(player2Name)) {
-                                        System.out.println("[DEBUG] Updating p2Stats");
+                                        System.out.println("Updating p2Stats");
                                         p2Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
                                     } else {
-                                        System.out.println("[DEBUG] targetUser didn't match either player name");
+                                        System.out.println("targetUser didn't match either player name");
                                     }
                                 });
                             }
@@ -483,7 +487,6 @@ public class GuiClient extends Application {
                                 });
                             }
                             
-
                             else if (data.message.equals("ADDFRIEND_SUCCESS")) {
                                 if (AFresultLabel != null)
                                     AFresultLabel.setText("User is added");
@@ -517,13 +520,10 @@ public class GuiClient extends Application {
                                 });
                             }
 
-                            
-                            
                             else if (data.message.equals("ADDFRIEND_FAIL")) {
                                 if (AFresultLabel != null)
                                     AFresultLabel.setText("User not found or already added.");
                             }
-                            
 
                             String sender = data.senderName != null ? data.senderName : data.recipient;
                             String formattedMsg = "From "+sender + ": " + data.message;
@@ -534,15 +534,12 @@ public class GuiClient extends Application {
                             if (!chatMessages.getItems().contains(formattedMsg)) {
                                 chatMessages.getItems().add(formattedMsg);
                             }
-
-
                         });
                         break;
         
                     case NEWUSER:
                         Platform.runLater(() -> {
                             chatMessages.getItems().add("Player " + data.recipient + " joined.");
-
                         });
                         break;
         
@@ -562,7 +559,6 @@ public class GuiClient extends Application {
                             System.out.println("Received updated stats for: " + data.recipient);
                             System.out.println("winRate = " + winRate + ", totalGames = " + totalGames);
 
-                    
                             if (data.recipient.equals(player1Name)) {
                                 p1Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
                             } else if (data.recipient.equals(player2Name)) {
@@ -587,16 +583,13 @@ public class GuiClient extends Application {
                 String payload = (isSignUp ? "SIGNUP" : "LOGIN") + ":" + username + ":" + password;
     
                 clientConnection.send(new Message("ALL", payload));
-    
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }).start();
     }
 
-    
-    
-    private Scene buildCreateRoomScene(String username) {
+    private Scene buildCreateRoomScene(String username) {     
         VBox layout = new VBox(15);
         layout.setPadding(new Insets(40));
         layout.setStyle("-fx-background-color: #FFFFC5;");
@@ -613,8 +606,7 @@ public class GuiClient extends Application {
             if (!roomName.isEmpty()) {
                 clientConnection.send(new Message("SERVER", "CREATE_ROOM:" + username + ":" + roomName));
             }
-        });     
-    
+        });
         backButton.setOnAction(e -> {
             primaryStage.setScene(lobbyScene);
         });
@@ -654,7 +646,7 @@ public class GuiClient extends Application {
                     if (gameOver[0] || !gameStarted[0]) return;
                     boolean isMyTurn = (playerTurn[0] && username.equals(player1Name)) || (!playerTurn[0] && username.equals(player2Name));
                     if (!isMyTurn) {
-                        System.out.println("[DEBUG] It's not your turn: " + username);
+                        System.out.println("It's not your turn: " + username);
                         return;
                     }
 
@@ -668,7 +660,6 @@ public class GuiClient extends Application {
                     if (dropRow == -1) return;
                     
                     clientConnection.send(new Message("SERVER", "MOVE:" + roomCode + ":" + username + ":" + finalCol));
-                    
                 });
                 gameBoard.add(cell, col, row);
                 buttons[row][col] = cell;
@@ -685,7 +676,6 @@ public class GuiClient extends Application {
                 primaryStage.setTitle("Game Lobby");
             });
         });
-
 
         VBox gameArea = new VBox(10, header, turnLabel, gameBoard, backBtn);
         gameArea.setPadding(new Insets(10));
@@ -746,7 +736,6 @@ public class GuiClient extends Application {
         }
 
         // boolean[] gameStarted = {false}; // is the game started? it mightbe not
-
         startbt.setOnAction(e -> {
 
             if (playerListView.getItems().size() == 2) {  // just for when num of player ==2
@@ -822,9 +811,6 @@ public class GuiClient extends Application {
         return new Scene(root, 700, 550, Color.web("#FFFFC5"));
     }
 
-
-
-
     private Scene buildJoinRoomScene(String username) {
         VBox layout = new VBox(15);
         layout.setPadding(new Insets(30));
@@ -859,7 +845,6 @@ public class GuiClient extends Application {
             clientConnection.send(new Message("SERVER", "JOIN_RANDOM_REQUEST:" + username));
         });
         
-    
         backBtn.setOnAction(e -> {
             primaryStage.setScene(lobbyScene);
         });
@@ -934,13 +919,12 @@ public class GuiClient extends Application {
         if (checkWin(board, dropRow, col, currentPlayer)) {
             gameOver[0] = true;
             turnLabel.setText("Player " + currentPlayer + " wins!");
-            showWinDialog("Player " + currentPlayer + " wins!");
-            System.out.println("[DEBUG] Game Over - Winner: " + (currentPlayer == 1 ? player1Name : player2Name));
+            showWinDialog("Player " + currentPlayer + " wins!!");
+            System.out.println("Game Over - Winner: " + (currentPlayer == 1 ? player1Name : player2Name));
             
             String winner = (currentPlayer == 1) ? player1Name : player2Name;
             String loser  = (currentPlayer == 1) ? player2Name : player1Name;
             clientConnection.send(new Message("SERVER", "GAME_RESULT:" + winner + ":" + loser));
-
             clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player1Name));
             clientConnection.send(new Message("SERVER", "PROFILE_REQUEST:" + player2Name));
             clientConnection.send(new Message("SERVER", "GET_HISTORY:" + player1Name));
@@ -961,7 +945,4 @@ public class GuiClient extends Application {
             turnLabel.setText("Turn: Player " + (playerTurn[0] ? "1 (Red)" : "2 (Yellow)"));
         }
     }
-    
-
-
 }

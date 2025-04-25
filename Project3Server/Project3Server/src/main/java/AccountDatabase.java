@@ -79,7 +79,7 @@ public class AccountDatabase {
         gameHistories.computeIfAbsent(player1, k -> new ArrayList<>()).add(result);
         gameHistories.computeIfAbsent(player2, k -> new ArrayList<>()).add(result);
 
-        System.out.println("[HISTORY] " + result);
+        System.out.println("HISTORY " + result);
         System.out.println("  → " + player1 + ": " + gameHistories.get(player1));
         System.out.println("  → " + player2 + ": " + gameHistories.get(player2));
     }
