@@ -241,7 +241,9 @@ public class GuiClient extends Application {
         leftPane.getChildren().addAll(profileBox, createRoom, joinRoom, historyList);
 
         Button addFriend = new Button("+ Add Friend");
+        addFriend.setPrefSize(100,30);
         Button textMessage = new Button("Text Message");
+        textMessage.setPrefSize(100,30);
 
         textMessage.setOnAction(e -> {
             primaryStage.setScene(chatScene);
@@ -262,7 +264,7 @@ public class GuiClient extends Application {
         HBox mainLayout = new HBox(20, leftPane, vbox1 );
         mainLayout.setPadding(new Insets(20));
 
-        return new Scene(mainLayout, 500, 400, Color.web("#FFFFC5"));
+        return new Scene(mainLayout, 550, 400, Color.web("#FFFFC5"));
     }
 
     private Scene buildAddFriendScene(String currentUser) {
@@ -468,13 +470,21 @@ public class GuiClient extends Application {
 
                                     System.out.println("Received FRIENDLIST message: " + data.message);
                                     System.out.println("Friends list: " + String.join(", ", friends));
-                                    FriendList.getItems().setAll(friends);
-                            
+                                    // FriendList.getItems().setAll(friends);
+                                    
                                     Platform.runLater(() -> {
+                                        FriendList.getItems().clear();
                                         recipientComboBox.getItems().clear();
                                         recipientComboBox.getItems().add("ALL");
+                            
                                         for (String friend : friends) {
-                                            recipientComboBox.getItems().add(friend);
+                                            if (friend.startsWith("[Online]")) {
+                                                FriendList.getItems().add(friend);
+                                            } else {
+                                                FriendList.getItems().add(friend);
+                                            }
+                                            String cleanFriendName = friend.replace("[Online] ", "").trim();
+                                            recipientComboBox.getItems().add(cleanFriendName);
                                         }
                                     });
                                 }
@@ -541,6 +551,8 @@ public class GuiClient extends Application {
                         Platform.runLater(() -> {
                             chatMessages.getItems().add("Player " + data.recipient + " joined.");
                         });
+                        FriendList.getItems().clear();
+                        clientConnection.send(new Message("SERVER", "GETFRIEND:" + currentUsername));
                         break;
         
                     case DISCONNECT:
@@ -549,23 +561,25 @@ public class GuiClient extends Application {
                             chatMessages.getItems().add(data.senderName + " has disconnected!");
                             
                         });
+                        FriendList.getItems().clear();
+                        clientConnection.send(new Message("SERVER", "GETFRIEND:" + currentUsername));
                         break;
-                        case WINRATE_INFO:
-                        Platform.runLater(() -> {
-                            String[] parts = data.message.split(",");
-                            String winRate = parts[0];
-                            String totalGames = parts[1];
+                    case WINRATE_INFO:
+                    Platform.runLater(() -> {
+                        String[] parts = data.message.split(",");
+                        String winRate = parts[0];
+                        String totalGames = parts[1];
 
-                            System.out.println("Received updated stats for: " + data.recipient);
-                            System.out.println("winRate = " + winRate + ", totalGames = " + totalGames);
+                        System.out.println("Received updated stats for: " + data.recipient);
+                        System.out.println("winRate = " + winRate + ", totalGames = " + totalGames);
 
-                            if (data.recipient.equals(player1Name)) {
-                                p1Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
-                            } else if (data.recipient.equals(player2Name)) {
-                                p2Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
-                            }
-                        });
-                        break;
+                        if (data.recipient.equals(player1Name)) {
+                            p1Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
+                        } else if (data.recipient.equals(player2Name)) {
+                            p2Stats.setText("Rating: " + winRate + " %\nGames: " + totalGames);
+                        }
+                    });
+                    break;
                     
                 }
             });

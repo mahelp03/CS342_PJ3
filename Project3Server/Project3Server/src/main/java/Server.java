@@ -18,6 +18,8 @@ public class Server {
     private Consumer<Message> callback;
 
     private final HashMap<String, GameRoom> gameRooms = new HashMap<>();
+    private final Set<String> onlineUsers = new HashSet<>(); // figure out who is online currently
+
 
 
     Server(Consumer<Message> call) {
@@ -121,9 +123,6 @@ public class Server {
                         }
                     }
 
-
-
-                    // System.out.println("Received message: " + data.message); // log testing
                     if (!(data.message.startsWith("LOGIN:") || data.message.startsWith("SIGNUP:"))) {
                         updateClients(data);
                     }
@@ -148,6 +147,7 @@ public class Server {
                     
                             if (result.equals("OK")) {
                                 this.username = username;
+                                onlineUsers.add(username); // add online
                                 Message newUser = new Message(username, true);
                                 newUser.senderName = username;
                                 callback.accept(newUser);
@@ -202,8 +202,24 @@ public class Server {
                     else if (data.message.startsWith("GETFRIEND:")) { // when player entered lobby
                         String user = data.message.substring("GETFRIEND:".length());
                         Set<String> friends = FriendHander.getFriends(user);
-                        String friendStr = String.join(",", friends);
-                        out.writeObject(new Message(user, "FRIENDLIST:" + user + ":" + friendStr));
+                        StringBuilder friendListWithStatus = new StringBuilder();
+                        for (String friend : friends) {
+                            if (onlineUsers.contains(friend)) {
+                                friendListWithStatus.append("[Online] ").append(friend);
+                            } else {
+                                friendListWithStatus.append(friend);
+                            }
+                            friendListWithStatus.append(",");
+                        }
+
+                        if (friendListWithStatus.length() > 0) {
+                            friendListWithStatus.setLength(friendListWithStatus.length() - 1);
+                        }
+
+                        out.writeObject(new Message(user, "FRIENDLIST:" + user + ":" + friendListWithStatus.toString()));
+                        // pre_version
+                        //String friendStr = String.join(",", friends);
+                        //out.writeObject(new Message(user, "FRIENDLIST:" + user + ":" + friendStr));
                         continue;
                     }
                     
@@ -579,6 +595,10 @@ public class Server {
                     discon.senderName = username != null ? username : "UNKNOWN";
                     callback.accept(discon);
                     updateClients(discon);
+
+                    if (username != null) {
+                        onlineUsers.remove(username);
+                    }
                     clients.remove(this);
                     break;
                 }
