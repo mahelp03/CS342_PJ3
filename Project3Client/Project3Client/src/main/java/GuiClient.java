@@ -33,7 +33,7 @@ public class GuiClient extends Application {
 
     TextField c1;
     Button b1, b2;
-    Label ratingLabel, gamesLabel, AFresultLabel;
+    Label ratingLabel, gamesLabel, AFresultLabel, errorM;
     HashMap<String, Scene> sceneMap;
     VBox clientBox;
     Client clientConnection;
@@ -142,8 +142,11 @@ public class GuiClient extends Application {
         Label t0 = new Label("");
         HBox t1 = new HBox(220, t0, logo);
         VBox t2 = new VBox(50,signupButton, t1 );
+        errorM = new Label();
+        errorM.setPrefSize(300, 30);
+        errorM.setStyle("-fx-text-fill: red;");
         
-        VBox loginBox = new VBox(15, title, usernameField, passwordField, agreeCheck, loginButton, t2);
+        VBox loginBox = new VBox(15, title, usernameField, passwordField, errorM,agreeCheck, loginButton, t2);
         loginBox.setPadding(new Insets(50));
         loginBox.setStyle("-fx-background-color: #FFFFC5;");
         
@@ -162,7 +165,6 @@ public class GuiClient extends Application {
         b1.setPrefSize(50, 20);
         b2 = new Button("Back");
         b2.setPrefSize(50, 20); 
-        // b2.setPadding(new Insets(0, 0, 0, 30));
         HBox t7 = new HBox(5, b1, b2);
     
         fields = new HBox(10, recipientComboBox, c1, t7);
@@ -328,7 +330,7 @@ public class GuiClient extends Application {
                                 return;
                             }
                             else if (data.message.equals("LOGIN_FAIL") || data.message.equals("SIGNUP_FAIL")) {
-                                showErrorMessage("Login Failed");
+                                Platform.runLater(() -> errorM.setText("Login failed. Please check your username or password."));
                                 try {
                                     clientConnection.close();
                                 } catch (Exception e) {
