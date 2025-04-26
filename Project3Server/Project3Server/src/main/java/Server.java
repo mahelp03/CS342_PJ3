@@ -84,6 +84,7 @@ public class Server {
                     for (ClientThread t : clients) {
                         try {
                             t.out.writeObject(message);
+                            
                         } catch (Exception e) {
                             System.err.println("User Update Error");
                         }
@@ -572,7 +573,7 @@ public class Server {
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    System.out.println("Client #" + username + " disconnected due to error.");
+                    System.out.println("Client" + username + " disconnected due to error.");
 
                     Message discon = new Message(username != null ? username : "UNKNOWN", false);
                     discon.senderName = username != null ? username : "UNKNOWN";

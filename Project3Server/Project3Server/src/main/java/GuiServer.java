@@ -1,4 +1,5 @@
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -49,15 +50,20 @@ public class GuiServer extends Application {
                 case TEXT:
                     break;
                 case NEWUSER:
+                Platform.runLater(() -> {
                     listUsers.getItems().add(String.valueOf(data.recipient));
                     listItems.getItems().add(displayName + " has joined!");
                     refreshAccountTable();
-                    break;
+                });
+                break;
                 case DISCONNECT:
+                Platform.runLater(() -> {
+                    System.out.println("Check: " + data.senderName + "is Disconnected");
                     listItems.getItems().add(data.senderName + " has disconnected!!!!!!!");
                     listUsers.getItems().remove(data.recipient);
                     refreshAccountTable();
-                    break;
+                });
+                break;
             }
             
         });
@@ -69,7 +75,7 @@ public class GuiServer extends Application {
         label1.setPadding(new Insets(0,0,0,30));
         Button accountButton = new Button("Account");
         accountButton.setPrefSize(100,40);
-        Button messageButton = new Button("View Messages");
+        Button messageButton = new Button("User Status");
         messageButton.setPrefSize(100,40);
  
         messageButton.setOnAction(e -> {
@@ -85,14 +91,14 @@ public class GuiServer extends Application {
         VBox u8 = new VBox(20, label1, buttonBox);
         
         BorderPane mainPane = new BorderPane(u8);
-        u8.setPadding(new Insets(140,0,0,200));
+        u8.setPadding(new Insets(140,0,0,190));
         mainPane.setStyle("-fx-background-color: lightblue; -fx-font-family: 'serif';");
         
         return new Scene(mainPane, 600, 400);
     }
 
     private Scene createMessageScene() {
-        Label label = new Label("Status");
+        Label label = new Label("User Status");
         label.setFont(Font.font("Times New Roman", 18));
 
         listItems = new ListView<>();

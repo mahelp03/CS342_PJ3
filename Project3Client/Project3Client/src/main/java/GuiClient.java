@@ -546,7 +546,7 @@ public class GuiClient extends Application {
                     case DISCONNECT:
                         Platform.runLater(() -> {
                             chatMessages.getItems().remove(data.recipient); // refresh online players
-                            chatMessages.getItems().add(data.recipient);
+                            chatMessages.getItems().add(data.senderName + " has disconnected!");
                             
                         });
                         break;
